@@ -1,0 +1,55 @@
+.checkin-list { padding: 0 16px 16px; }
+
+.checkin-date {
+  text-align: center; font-size: 14px; color: #999; margin: 0 0 16px;
+}
+
+.checkin-card {
+  background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.checkin-child-info {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+
+.checkin-avatar { font-size: 36px; }
+
+.checkin-child-name { font-weight: 700; font-size: 17px; color: #333; }
+
+.checkin-class { font-size: 13px; color: #999; }
+
+.checkin-status-badge {
+  margin-left: auto; font-size: 11px; font-weight: 600;
+  padding: 4px 10px; border-radius: 10px;
+}
+
+.checkin-status-badge.present { background: #e8f5e9; color: #2e7d32; }
+.checkin-status-badge.left { background: #f5f5f5; color: #999; }
+
+.checkin-timeline {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+  padding: 8px 12px; background: #f8f9fa; border-radius: 8px; font-size: 13px;
+}
+
+.checkin-timeline-item { color: #555; }
+
+.checkin-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 700; color: white; cursor: pointer;
+}
+
+.checkin-btn:disabled { opacity: 0.6; }
+
+.btn-checkin { background: linear-gradient(135deg, #4CAF50, #45a049); }
+.btn-checkout { background: linear-gradient(135deg, #ff9800, #f57c00); }
+
+.success-container {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 60px 24px; text-align: center;
+}
+
+.success-icon { color: #4CAF50; margin-bottom: 20px; }
+.success-container h2 { margin-bottom: 8px; }
+.success-container p { color: #666; font-size: 15px; }

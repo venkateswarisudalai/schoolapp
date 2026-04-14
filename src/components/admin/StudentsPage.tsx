@@ -1,0 +1,414 @@
+import { useState, useEffect } from 'react';
+import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
+import { ChevronLeft, Search, Users as UsersIcon, Edit3, Trash2, Save } from 'lucide-react';
+import './StudentsPage.css';
+
+interface Student {
+  id: string;
+  name: string;
+  parentId: string;
+  studentUserId: string;
+  classId: string;
+  dateOfBirth: string;
+  gender: 'male' | 'female';
+  address: string;
+  emergencyContact: string;
+  medicalInfo?: string;
+  admissionDate: string;
+}
+
+interface Parent {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface StudentsPageProps {
+  onBack: () => void;
+}
+
+const StudentsPage = ({ onBack }: StudentsPageProps) => {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [parents, setParents] = useState<Parent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+
+      // Load all students (children collection)
+      const studentsSnapshot = await getDocs(collection(db, 'children'));
+      const studentsData = studentsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Student));
+
+      // Load all parents
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const parentsData = usersSnapshot.docs
+        .filter(doc => doc.data().role === 'parent')
+        .map(doc => ({
+          id: doc.id,
+          name: doc.data().name,
+          email: doc.data().email,
+          phone: doc.data().phone
+        } as Parent));
+
+      setStudents(studentsData);
+      setParents(parentsData);
+    } catch (error) {
+      console.error('Error loading students:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState<Record<string, string>>({});
+
+  const getClassName = (classId: string) => {
+    const classNames: Record<string, string> = {
+      'class-1': 'Nursery', 'class-2': 'LKG', 'class-3': 'UKG',
+      'nursery': 'Nursery', 'lkg': 'LKG', 'ukg': 'UKG'
+    };
+    return classNames[classId] || classId;
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedStudent) return;
+    try {
+      await updateDoc(doc(db, 'children', selectedStudent.id), editData);
+      setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, ...editData } as Student : s));
+      setSelectedStudent({ ...selectedStudent, ...editData } as Student);
+      setEditing(false);
+    } catch (error) {
+      console.error('Error updating student:', error);
+      alert('Failed to update student');
+    }
+  };
+
+  const handleDelete = async (studentId: string) => {
+    if (!confirm('Are you sure you want to remove this student? This cannot be undone.')) return;
+    try {
+      await deleteDoc(doc(db, 'children', studentId));
+      setStudents(prev => prev.filter(s => s.id !== studentId));
+      setSelectedStudent(null);
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      alert('Failed to delete student');
+    }
+  };
+
+  const getParentInfo = (parentId: string) => {
+    return parents.find(p => p.id === parentId);
+  };
+
+  const calculateAge = (dateOfBirth: string) => {
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Get counts by class
+  const nurseryCount = students.filter(s => s.classId === 'class-1' || s.classId === 'nursery').length;
+  const lkgCount = students.filter(s => s.classId === 'class-2' || s.classId === 'lkg').length;
+  const ukgCount = students.filter(s => s.classId === 'class-3' || s.classId === 'ukg').length;
+
+  // Filter students
+  const filteredStudents = students.filter(student => {
+    const matchesSearch =
+      student.name?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesClass = selectedClass === 'all' || student.classId === selectedClass;
+
+    return matchesSearch && matchesClass;
+  });
+
+  if (loading) {
+    return (
+      <div className="students-page-container">
+        <div className="page-header">
+          <button className="back-btn" onClick={onBack}>
+            <ChevronLeft size={24} />
+          </button>
+          <h2 className="page-title">Students</h2>
+        </div>
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          <p>Loading students...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="students-page-container">
+      <div className="page-header">
+        <button className="back-btn" onClick={onBack}>
+          <ChevronLeft size={24} />
+        </button>
+        <h2 className="page-title">All Students</h2>
+      </div>
+
+      {/* Class Summary Cards */}
+      <div className="class-summary">
+        <div
+          className={`summary-card total ${selectedClass === 'all' ? 'active' : ''}`}
+          onClick={() => setSelectedClass('all')}
+        >
+          <div className="summary-icon">👶</div>
+          <div className="summary-number">{students.length}</div>
+          <div className="summary-label">Total Students</div>
+        </div>
+
+        <div
+          className={`summary-card nursery ${selectedClass === 'class-1' ? 'active' : ''}`}
+          onClick={() => setSelectedClass('class-1')}
+        >
+          <div className="summary-icon">🌱</div>
+          <div className="summary-number">{nurseryCount}</div>
+          <div className="summary-label">Nursery</div>
+        </div>
+
+        <div
+          className={`summary-card lkg ${selectedClass === 'class-2' ? 'active' : ''}`}
+          onClick={() => setSelectedClass('class-2')}
+        >
+          <div className="summary-icon">📚</div>
+          <div className="summary-number">{lkgCount}</div>
+          <div className="summary-label">LKG</div>
+        </div>
+
+        <div
+          className={`summary-card ukg ${selectedClass === 'class-3' ? 'active' : ''}`}
+          onClick={() => setSelectedClass('class-3')}
+        >
+          <div className="summary-icon">🎓</div>
+          <div className="summary-number">{ukgCount}</div>
+          <div className="summary-label">UKG</div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="students-controls">
+        <div className="search-box">
+          <Search size={20} />
+          <input
+            type="text"
+            placeholder="Search student by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Students List */}
+      <div className="students-list">
+        {filteredStudents.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+            {searchTerm ? 'No students found matching your search.' : 'No students found.'}
+          </div>
+        ) : (
+          <>
+            <div className="students-count">
+              Showing {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
+              {selectedClass !== 'all' && ` in ${getClassName(selectedClass)}`}
+            </div>
+            {filteredStudents.map((student) => {
+              const parent = getParentInfo(student.parentId);
+              const age = calculateAge(student.dateOfBirth);
+
+              return (
+                <div
+                  key={student.id}
+                  className="student-card"
+                  onClick={() => setSelectedStudent(student)}
+                >
+                  <div className="student-card-header">
+                    <div className="student-avatar">
+                      {student.gender === 'male' ? '👦' : '👧'}
+                    </div>
+                    <div className="student-info">
+                      <h3>{student.name}</h3>
+                      <div className="student-meta">
+                        <span className={`class-badge ${student.classId}`}>
+                          {getClassName(student.classId)}
+                        </span>
+                        <span className="age-badge">{age} years old</span>
+                        <span className="gender-badge">{student.gender}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="student-details">
+                    <div className="detail-row">
+                      <strong>Parent:</strong>
+                      <span>{parent?.name || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <strong>Phone:</strong>
+                      <span>{parent?.phone || 'N/A'}</span>
+                    </div>
+                    <div className="detail-row">
+                      <strong>Date of Birth:</strong>
+                      <span>{new Date(student.dateOfBirth).toLocaleDateString()}</span>
+                    </div>
+                    <div className="detail-row">
+                      <strong>Admission Date:</strong>
+                      <span>{new Date(student.admissionDate).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+
+      {/* Student Details Modal */}
+      {selectedStudent && (
+        <div className="modal-overlay" onClick={() => setSelectedStudent(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <UsersIcon size={24} />
+              <h3>Student Details</h3>
+            </div>
+
+            <div className="student-details-full">
+              <div className="detail-section">
+                <h4>Student Information</h4>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <strong>Name:</strong>
+                    <span>{selectedStudent.name}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Class:</strong>
+                    <span className={`class-badge ${selectedStudent.classId}`}>
+                      {getClassName(selectedStudent.classId)}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Gender:</strong>
+                    <span>{selectedStudent.gender}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Date of Birth:</strong>
+                    <span>{new Date(selectedStudent.dateOfBirth).toLocaleDateString()}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Age:</strong>
+                    <span>{calculateAge(selectedStudent.dateOfBirth)} years</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Admission Date:</strong>
+                    <span>{new Date(selectedStudent.admissionDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h4>Parent/Guardian Information</h4>
+                <div className="detail-grid">
+                  {(() => {
+                    const parent = getParentInfo(selectedStudent.parentId);
+                    return parent ? (
+                      <>
+                        <div className="detail-item">
+                          <strong>Name:</strong>
+                          <span>{parent.name}</span>
+                        </div>
+                        <div className="detail-item">
+                          <strong>Email:</strong>
+                          <span>{parent.email}</span>
+                        </div>
+                        <div className="detail-item">
+                          <strong>Phone:</strong>
+                          <span>{parent.phone}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="detail-item">
+                        <span>No parent information available</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="detail-section">
+                <h4>Contact & Medical Information</h4>
+                <div className="detail-grid">
+                  <div className="detail-item full-width">
+                    <strong>Address:</strong>
+                    <span>{selectedStudent.address}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Emergency Contact:</strong>
+                    <span>{selectedStudent.emergencyContact}</span>
+                  </div>
+                  {selectedStudent.medicalInfo && (
+                    <div className="detail-item full-width">
+                      <strong>Medical Info:</strong>
+                      <span className="medical-info">{selectedStudent.medicalInfo}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {editing ? (
+              <div className="modal-edit-form" style={{ padding: '0 16px 16px' }}>
+                <h4 style={{ margin: '0 0 12px' }}>Edit Details</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input placeholder="Address" value={editData.address ?? selectedStudent.address ?? ''} onChange={e => setEditData(prev => ({...prev, address: e.target.value}))} style={{ padding: '8px 10px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px' }} />
+                  <input placeholder="Emergency Contact" value={editData.emergencyContact ?? selectedStudent.emergencyContact ?? ''} onChange={e => setEditData(prev => ({...prev, emergencyContact: e.target.value}))} style={{ padding: '8px 10px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px' }} />
+                  <select value={editData.classId ?? selectedStudent.classId} onChange={e => setEditData(prev => ({...prev, classId: e.target.value}))} style={{ padding: '8px 10px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px' }}>
+                    <option value="class-1">Nursery</option><option value="class-2">LKG</option><option value="class-3">UKG</option>
+                  </select>
+                  <textarea placeholder="Medical Info" value={editData.medicalInfo ?? (selectedStudent.medicalInfo || '')} onChange={e => setEditData(prev => ({...prev, medicalInfo: e.target.value}))} rows={2} style={{ padding: '8px 10px', border: '1px solid #ddd', borderRadius: '8px', fontSize: '14px', fontFamily: 'inherit' }} />
+                </div>
+              </div>
+            ) : null}
+
+            <div className="modal-actions" style={{ display: 'flex', gap: '8px' }}>
+              {editing ? (
+                <>
+                  <button className="btn-secondary" onClick={() => setEditing(false)} style={{ flex: 1 }}>Cancel</button>
+                  <button onClick={handleSaveEdit} style={{ flex: 1, padding: '10px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <Save size={16} /> Save
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="btn-secondary" onClick={() => setSelectedStudent(null)} style={{ flex: 1 }}>Close</button>
+                  <button onClick={() => { setEditData({}); setEditing(true); }} style={{ flex: 1, padding: '10px', background: '#00897B', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <Edit3 size={16} /> Edit
+                  </button>
+                  <button onClick={() => handleDelete(selectedStudent.id)} style={{ padding: '10px 14px', background: '#ffebee', color: '#f44336', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trash2 size={16} />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default StudentsPage;

@@ -1,0 +1,292 @@
+.report-date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+.report-date-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.report-date-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.report-date-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.report-child-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.report-sections {
+  padding: 8px 16px 16px;
+}
+
+.report-card {
+  background: white;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.report-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  color: #00897B;
+}
+
+.report-card-header h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.report-card-body {
+  padding: 12px 16px;
+}
+
+.report-empty {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+/* Attendance */
+.report-attendance-row {
+  margin-bottom: 8px;
+}
+
+.attendance-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.attendance-badge.present { background: #e8f5e9; color: #2e7d32; }
+.attendance-badge.absent { background: #ffebee; color: #c62828; }
+.attendance-badge.late { background: #fff3e0; color: #e65100; }
+.attendance-badge.half-day { background: #e3f2fd; color: #1565c0; }
+
+.report-times {
+  display: flex;
+  gap: 16px;
+}
+
+.report-time-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.report-time-label {
+  font-size: 11px;
+  color: #999;
+  text-transform: uppercase;
+}
+
+.report-time-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.report-checkins {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.report-checkin-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  background: #f8f9fa;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.report-checkin-time {
+  color: #999;
+  margin-left: 4px;
+}
+
+/* Meals */
+.report-meal-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.report-meal-item:last-child { border-bottom: none; }
+
+.report-meal-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.report-meal-type {
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.report-meal-time {
+  font-size: 12px;
+  color: #999;
+}
+
+.report-meal-details {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #666;
+}
+
+.report-consumption {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+/* Naps */
+.report-nap-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.report-nap-quality {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+
+.report-nap-quality.good { background: #e8f5e9; color: #2e7d32; }
+.report-nap-quality.restless { background: #fff3e0; color: #e65100; }
+.report-nap-quality.refused { background: #ffebee; color: #c62828; }
+
+/* Activities */
+.report-activity-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.report-activity-item:last-child { border-bottom: none; }
+
+.report-activity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-activity-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.report-participation {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+
+.report-participation.active { background: #e8f5e9; color: #2e7d32; }
+.report-participation.moderate { background: #fff3e0; color: #e65100; }
+.report-participation.minimal { background: #ffebee; color: #c62828; }
+
+.report-activity-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #666;
+}
+
+/* Mood */
+.report-mood {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-mood-emoji {
+  font-size: 32px;
+}
+
+.report-mood-label {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #333;
+}
+
+.report-health-notes {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fff3e0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #e65100;
+}
+
+/* Photos */
+.report-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.report-photo {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.report-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.report-photo-caption {
+  margin: 4px 0;
+  font-size: 13px;
+  color: #666;
+}

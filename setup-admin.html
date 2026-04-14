@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Admin - Mayuri School</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+    h1 { font-size: 28px; color: #333; margin-bottom: 10px; }
+    .info { background: #e3f2fd; padding: 16px; border-radius: 8px; margin: 20px 0; }
+    .info code { background: #fff; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+    .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
+    .step { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #ff9800; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Admin Setup Tool</h1>
+    <p style="color: #666; margin-bottom: 20px;">This tool will create the admin Firestore document</p>
+
+    <div class="info">
+      <strong>📧 Admin Email:</strong> <code>venki10march@gmail.com</code><br>
+      <strong>🆔 User ID:</strong> <code>8Nz4mTygXYPoRccyjfcyAYpMeJC2</code>
+    </div>
+
+    <div class="step">
+      <strong>⚠️ Important:</strong> You must be logged into Firebase Console in another tab with owner/editor permissions.
+    </div>
+
+    <button onclick="openFirebaseConsole()">1️⃣ Open Firebase Console</button>
+    <button onclick="copyInstructions()">2️⃣ Copy Instructions</button>
+    <button onclick="openApp()">3️⃣ Open App to Test</button>
+
+    <div id="message"></div>
+
+    <div id="instructions" style="display: none;">
+      <h3 style="margin-top: 20px;">Manual Steps:</h3>
+      <pre id="instructionsText"></pre>
+    </div>
+  </div>
+
+  <script>
+    const userId = '8Nz4mTygXYPoRccyjfcyAYpMeJC2';
+    const email = 'venki10march@gmail.com';
+
+    const instructions = `
+Firebase Console Steps:
+
+1. Open: https://console.firebase.google.com/project/school-c0203/firestore/data
+
+2. If "users" collection doesn't exist:
+   - Click "Start collection"
+   - Collection ID: users
+   - Click "Next"
+
+3. Add Document:
+   - Document ID: ${userId}
+   - Click "+ Add field" for each:
+
+   Field 1:
+   - name: email
+   - type: string
+   - value: ${email}
+
+   Field 2:
+   - name: name
+   - type: string
+   - value: Vignesh - School Administrator
+
+   Field 3:
+   - name: role
+   - type: string
+   - value: admin
+
+   Field 4:
+   - name: approvalStatus
+   - type: string
+   - value: approved
+
+   Field 5:
+   - name: phone
+   - type: string
+   - value: +91 9876543210
+
+4. Click "Save"
+
+5. Test login at: https://school-c0203.web.app
+   - Email: ${email}
+   - Password: (your Firebase Auth password)
+`;
+
+    function openFirebaseConsole() {
+      window.open('https://console.firebase.google.com/project/school-c0203/firestore/data/~2Fusers', '_blank');
+      showMessage('success', '✅ Firebase Console opened! Follow the manual steps below.');
+      document.getElementById('instructions').style.display = 'block';
+      document.getElementById('instructionsText').textContent = instructions;
+    }
+
+    function copyInstructions() {
+      navigator.clipboard.writeText(instructions).then(() => {
+        showMessage('success', '✅ Instructions copied to clipboard!');
+        document.getElementById('instructions').style.display = 'block';
+        document.getElementById('instructionsText').textContent = instructions;
+      });
+    }
+
+    function openApp() {
+      window.open('https://school-c0203.web.app', '_blank');
+      showMessage('success', '✅ App opened! Try logging in with your credentials.');
+    }
+
+    function showMessage(type, text) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.className = 'message ' + type;
+      messageDiv.textContent = text;
+    }
+  </script>
+</body>
+</html>

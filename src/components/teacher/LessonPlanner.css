@@ -1,0 +1,214 @@
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.activity-entry {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.activity-entry-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.activity-entry-header input,
+.activity-entry-header select {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.activity-entry > input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.btn-add-activity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px dashed var(--primary);
+  color: var(--primary);
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+/* Plan cards */
+.plan-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.plan-card:active {
+  transform: scale(0.98);
+}
+
+.plan-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.plan-card-header h4 {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.plan-card-header p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.plan-card-activities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.plan-activity-chip {
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.plan-activity-chip.more {
+  background: var(--primary);
+  color: white;
+}
+
+/* Detail view */
+.plan-detail-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 16px;
+  box-shadow: var(--shadow);
+}
+
+.plan-detail-card h3 {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.plan-detail-meta {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.plan-section {
+  margin-top: 20px;
+}
+
+.plan-section h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.plan-section ul {
+  padding-left: 20px;
+}
+
+.plan-section ul li {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.plan-timeline {
+  border-left: 2px solid var(--primary-light);
+  padding-left: 16px;
+}
+
+.plan-timeline-item {
+  position: relative;
+  margin-bottom: 16px;
+  padding-left: 8px;
+}
+
+.plan-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -22px;
+  top: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.plan-timeline-time {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.plan-timeline-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.plan-timeline-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.plan-timeline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.plan-duration {
+  background: #e0e7ff;
+  color: #4338ca;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.materials-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.material-tag {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 16px;
+}

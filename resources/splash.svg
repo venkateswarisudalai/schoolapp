@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="100%" style="stop-color:#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="2732" height="2732" fill="url(#bg)"/>
+
+  <!-- Centered logo group -->
+  <g transform="translate(1366, 1200)">
+    <!-- Book icon -->
+    <g transform="translate(0, -100)">
+      <!-- Open book base -->
+      <path d="M-350 -150 L-350 225 Q0 275 0 275 Q0 275 350 225 L350 -150 Q0 -100 0 -100 Q0 -100 -350 -150 Z" fill="#ffffff" opacity="0.95"/>
+      <!-- Book spine -->
+      <path d="M0 -100 L0 275" stroke="#4F46E5" stroke-width="10" opacity="0.3"/>
+      <!-- Left page lines -->
+      <line x1="-280" y1="-50" x2="-50" y2="-25" stroke="#4F46E5" stroke-width="8" opacity="0.2"/>
+      <line x1="-280" y1="25" x2="-50" y2="50" stroke="#4F46E5" stroke-width="8" opacity="0.2"/>
+      <line x1="-280" y1="100" x2="-50" y2="125" stroke="#4F46E5" stroke-width="8" opacity="0.2"/>
+      <!-- Right page lines -->
+      <line x1="280" y1="-50" x2="50" y2="-25" stroke="#4F46E5" stroke-width="8" opacity="0.2"/>
+      <line x1="280" y1="25" x2="50" y2="50" stroke="#4F46E5" stroke-width="8" opacity="0.2"/>
+      <line x1="280" y1="100" x2="50" y2="125" stroke="#4F46E5" stroke-width="8" opacity="0.2"/>
+    </g>
+
+    <!-- Graduation cap -->
+    <g transform="translate(0, -380)">
+      <polygon points="0,-100 225,0 0,50 -225,0" fill="#ffffff"/>
+      <rect x="-25" y="0" width="50" height="75" fill="#ffffff"/>
+      <ellipse cx="0" cy="75" rx="75" ry="25" fill="#ffffff"/>
+      <!-- Tassel -->
+      <line x1="225" y1="0" x2="225" y2="100" stroke="#FCD34D" stroke-width="10"/>
+      <circle cx="225" cy="115" r="20" fill="#FCD34D"/>
+    </g>
+  </g>
+
+  <!-- App name -->
+  <text x="1366" y="1650" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="#ffffff" text-anchor="middle">MAYURI</text>
+  <text x="1366" y="1800" font-family="Arial, sans-serif" font-size="90" fill="#ffffff" opacity="0.8" text-anchor="middle">SCHOOL</text>
+
+  <!-- Loading indicator dots -->
+  <g transform="translate(1366, 1950)">
+    <circle cx="-60" cy="0" r="15" fill="#ffffff" opacity="0.6"/>
+    <circle cx="0" cy="0" r="15" fill="#ffffff" opacity="0.8"/>
+    <circle cx="60" cy="0" r="15" fill="#ffffff" opacity="1"/>
+  </g>
+</svg>

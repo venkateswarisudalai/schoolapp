@@ -1,0 +1,89 @@
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.event-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+}
+
+.event-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.event-date {
+  min-width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.event-date .day {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.event-date .month {
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.event-details {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+}
+
+.event-icon {
+  font-size: 32px;
+  width: 40px;
+  text-align: center;
+}
+
+.event-info {
+  flex: 1;
+}
+
+.event-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.event-info p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.event-time {
+  display: inline-block;
+  font-size: 13px;
+  color: #666;
+  margin-right: 8px;
+}
+
+.event-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}

@@ -1,0 +1,276 @@
+.fee-tabs {
+  display: flex;
+  padding: 0 16px;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.fee-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: white;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+}
+
+.fee-tab.active {
+  background: #00897B;
+  color: white;
+  border-color: #00897B;
+}
+
+.fee-section {
+  padding: 0 16px 16px;
+}
+
+.fee-form-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.fee-form-card h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: #333;
+}
+
+.fee-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 4px 12px;
+}
+
+.fee-currency {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00897B;
+}
+
+.fee-amount-input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  padding: 8px 0;
+  outline: none;
+}
+
+.fee-period {
+  font-size: 14px;
+  color: #999;
+}
+
+.fee-text-input, .fee-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.fee-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.btn-secondary {
+  padding: 10px 16px;
+  border: 1px solid #00897B;
+  border-radius: 10px;
+  background: white;
+  color: #00897B;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fee-msg {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.fee-msg.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.fee-config-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.fee-config-row:last-child { border: none; }
+
+.fee-config-class {
+  font-weight: 500;
+  color: #333;
+}
+
+.fee-config-amount {
+  font-weight: 700;
+  color: #00897B;
+}
+
+/* Filter */
+.fee-filter-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.fee-filter-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.fee-filter-btn.active {
+  background: #00897B;
+  color: white;
+  border-color: #00897B;
+}
+
+.fee-filter-count {
+  background: rgba(0,0,0,0.1);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.fee-filter-btn.active .fee-filter-count {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Verify cards */
+.fee-verify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fee-verify-card {
+  background: white;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border-left: 4px solid #e0e0e0;
+}
+
+.fee-verify-card.pending { border-left-color: #ff9800; }
+.fee-verify-card.overdue { border-left-color: #f44336; }
+.fee-verify-card.paid { border-left-color: #4CAF50; }
+
+.fee-verify-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.fee-verify-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #333;
+}
+
+.fee-verify-class {
+  font-size: 12px;
+  color: #999;
+}
+
+.fee-verify-right {
+  text-align: right;
+}
+
+.fee-verify-amount {
+  font-weight: 700;
+  font-size: 16px;
+  color: #333;
+}
+
+.fee-verify-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.fee-verify-badge.pending { background: #fff3e0; color: #e65100; }
+.fee-verify-badge.overdue { background: #ffebee; color: #c62828; }
+.fee-verify-badge.paid { background: #e8f5e9; color: #2e7d32; }
+
+.fee-verify-bottom {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.fee-verify-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-verify {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #4CAF50;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-verify:disabled {
+  opacity: 0.6;
+}
+
+.btn-overdue {
+  padding: 8px 14px;
+  border: 1px solid #f44336;
+  border-radius: 8px;
+  background: white;
+  color: #f44336;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}

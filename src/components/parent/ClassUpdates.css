@@ -1,0 +1,32 @@
+.clu-list { padding: 8px 16px 16px; }
+
+.clu-card {
+  background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.clu-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+}
+
+.clu-type-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 8px; text-transform: uppercase;
+}
+.clu-type-badge.daily { background: #e3f2fd; color: #1565c0; }
+.clu-type-badge.weekly { background: #f3e5f5; color: #7b1fa2; }
+
+.clu-class-name { font-size: 13px; font-weight: 600; color: #333; margin-left: 8px; }
+
+.clu-date { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #999; }
+
+.clu-section { margin-bottom: 10px; }
+.clu-section-title { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #00897B; margin-bottom: 4px; text-transform: uppercase; }
+.clu-section p { margin: 0; font-size: 14px; line-height: 1.5; color: #333; }
+
+.clu-section.homework { background: #fff8e1; padding: 10px 12px; border-radius: 10px; }
+.clu-section.homework .clu-section-title { color: #f57c00; }
+
+.clu-section.reminder { background: #fce4ec; padding: 10px 12px; border-radius: 10px; }
+.clu-section.reminder .clu-section-title { color: #c62828; }
+
+.clu-footer { font-size: 12px; color: #999; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0; }

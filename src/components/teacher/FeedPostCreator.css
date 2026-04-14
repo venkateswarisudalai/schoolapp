@@ -1,0 +1,177 @@
+.feed-creator-form {
+  padding: 16px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.photo-url-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.form-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #00897B;
+}
+
+.photo-url-add {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid #00897B;
+  background: #00897B;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  resize: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #00897B;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.photo-preview {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-remove-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.photo-add-btn {
+  aspect-ratio: 1;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  color: #999;
+  font-size: 12px;
+  transition: border-color 0.2s;
+}
+
+.photo-add-btn:hover {
+  border-color: #00897B;
+  color: #00897B;
+}
+
+.category-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.category-chip.active {
+  background: #00897B;
+  color: white;
+  border-color: #00897B;
+}
+
+.tag-children-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-chip.active {
+  background: #e8f5e9;
+  border-color: #4CAF50;
+  color: #2e7d32;
+}
+
+.form-error {
+  color: #f44336;
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: #ffebee;
+  border-radius: 8px;
+}

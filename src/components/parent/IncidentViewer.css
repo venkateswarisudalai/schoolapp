@@ -1,0 +1,31 @@
+.incident-list { padding: 8px 16px 16px; }
+
+.incident-card {
+  background: white; border-radius: 14px; padding: 16px; margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06); border-left: 4px solid #e0e0e0;
+}
+.incident-card.minor { border-left-color: #ff9800; }
+.incident-card.moderate { border-left-color: #f57c00; }
+.incident-card.serious { border-left-color: #d32f2f; }
+
+.incident-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.incident-severity { display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; }
+.incident-date { font-size: 12px; color: #999; }
+.incident-child { margin: 0 0 10px; font-size: 16px; }
+.incident-detail { margin-bottom: 8px; }
+.incident-detail-label { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; }
+.incident-detail p { margin: 4px 0 0; font-size: 14px; color: #333; line-height: 1.4; }
+.incident-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: #999; margin: 10px 0; }
+
+.btn-acknowledge {
+  display: flex; align-items: center; gap: 6px; width: 100%; justify-content: center;
+  padding: 10px; border: 2px solid #4CAF50; border-radius: 10px; background: white;
+  color: #4CAF50; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.btn-acknowledge:hover { background: #e8f5e9; }
+
+.incident-acknowledged {
+  display: flex; align-items: center; gap: 6px; justify-content: center;
+  padding: 8px; background: #e8f5e9; border-radius: 8px; color: #2e7d32;
+  font-size: 13px; font-weight: 500;
+}

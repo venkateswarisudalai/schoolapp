@@ -1,0 +1,271 @@
+.reports-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.report-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.report-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.report-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.report-info {
+  flex: 1;
+}
+
+.report-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.report-info p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.report-type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #e7f3ff;
+  color: #0066cc;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.report-grade {
+  text-align: right;
+}
+
+.grade-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.report-grade strong {
+  font-size: 24px;
+  color: #10b981;
+}
+
+.report-detail {
+  padding: 16px;
+}
+
+.report-header {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-header h3 {
+  margin: 0 0 4px 0;
+  font-size: 20px;
+}
+
+.report-type {
+  margin: 0;
+  color: #666;
+  text-transform: capitalize;
+}
+
+.download-btn {
+  padding: 10px 20px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.download-btn:hover {
+  background: #059669;
+}
+
+.report-section {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.report-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #1a1a1a;
+}
+
+.academics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.subject-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.subject-card h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.grade {
+  font-size: 32px;
+  font-weight: bold;
+  color: #10b981;
+  margin: 8px 0;
+}
+
+.comments {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.behavior-item {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.behavior-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.behavior-header span {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.rating {
+  font-size: 16px;
+}
+
+.behavior-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.attendance-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stat {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: #10b981;
+}
+
+.stat-value.absent {
+  color: #ef4444;
+}
+
+.teacher-comments {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+.overall-grade {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.overall-grade strong {
+  font-size: 32px;
+  display: block;
+  margin-top: 8px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+}
+
+.empty-state svg {
+  opacity: 0.3;
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  margin: 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty-state small {
+  font-size: 14px;
+}

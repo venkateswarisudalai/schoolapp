@@ -1,0 +1,35 @@
+.cs-form { padding: 0 16px 16px; }
+.cs-section { background: white; border-radius: 14px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.cs-section-title { display: flex; align-items: center; justify-content: space-between; margin: 0 0 14px; font-size: 15px; color: #333; }
+.cs-sub-title { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 8px; font-size: 13px; color: #555; }
+
+.cs-field { margin-bottom: 12px; flex: 1; }
+.cs-field label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.cs-field input, .cs-field select, .cs-field textarea {
+  width: 100%; padding: 9px 11px; border: 1px solid #e0e0e0; border-radius: 9px; font-size: 14px; box-sizing: border-box; font-family: inherit;
+}
+.cs-field input:focus, .cs-field select:focus, .cs-field textarea:focus { outline: none; border-color: #00897B; }
+
+.cs-row { display: flex; gap: 10px; align-items: flex-end; }
+.cs-row input, .cs-row select { flex: 1; padding: 9px 11px; border: 1px solid #e0e0e0; border-radius: 9px; font-size: 14px; box-sizing: border-box; }
+.cs-row input:focus, .cs-row select:focus { outline: none; border-color: #00897B; }
+
+.cs-hint { font-size: 12px; color: #999; margin: 4px 0 8px; display: block; }
+.cs-hint strong { color: #00897B; }
+
+.cs-add-btn {
+  display: flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid #00897B;
+  border-radius: 6px; background: white; color: #00897B; font-size: 12px; cursor: pointer;
+}
+
+.cs-entry { padding: 10px; background: #f8f9fa; border-radius: 10px; margin-bottom: 8px; }
+.cs-entry input, .cs-entry select { background: white; }
+
+.cs-remove-btn {
+  width: 32px; height: 32px; border: none; background: #ffebee; color: #f44336;
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+
+.cs-checkbox { display: flex; align-items: center; gap: 4px; font-size: 13px; white-space: nowrap; color: #555; }
+.cs-checkbox input { width: auto; }

@@ -1,0 +1,58 @@
+.cp-header { text-align: center; padding: 16px; }
+.cp-avatar { font-size: 48px; margin-bottom: 8px; }
+.cp-header h3 { margin: 0 0 4px; font-size: 20px; }
+.cp-class { color: #666; font-size: 14px; margin: 0 0 8px; }
+.cp-blood { display: inline-block; padding: 2px 10px; background: #ffebee; color: #c62828; border-radius: 8px; font-size: 12px; font-weight: 600; }
+
+.cp-allergy-alert {
+  display: flex; align-items: flex-start; gap: 10px; margin: 0 16px 12px;
+  padding: 12px 16px; background: #ffebee; border-radius: 12px; border: 1px solid #ffcdd2;
+  color: #c62828; font-size: 13px;
+}
+.cp-allergy-alert strong { display: block; margin-bottom: 2px; }
+
+.cp-tabs { display: flex; padding: 0 16px; gap: 4px; margin-bottom: 12px; }
+.cp-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 8px 4px; border: 1px solid #e0e0e0; border-radius: 8px;
+  background: white; font-size: 12px; font-weight: 500; color: #666; cursor: pointer;
+}
+.cp-tab.active { background: #00897B; color: white; border-color: #00897B; }
+
+.cp-content { padding: 0 16px 16px; }
+.cp-card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.cp-card h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 12px; font-size: 14px; color: #333; }
+
+.cp-field { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+.cp-field:last-child { border: none; }
+.cp-field-label { color: #999; font-size: 13px; }
+.cp-capitalize { text-transform: capitalize; }
+
+.cp-medical-item { padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+.cp-medical-item:last-child { border: none; }
+.cp-medical-header { display: flex; justify-content: space-between; align-items: center; }
+.cp-medical-name { font-weight: 600; font-size: 14px; }
+.cp-severity { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 8px; text-transform: uppercase; }
+.cp-severity.mild { background: #fff3e0; color: #e65100; }
+.cp-severity.moderate { background: #fff8e1; color: #f57c00; }
+.cp-severity.severe { background: #ffebee; color: #c62828; }
+.cp-action-plan { margin: 4px 0 0; font-size: 13px; color: #666; background: #f5f5f5; padding: 6px 10px; border-radius: 6px; }
+.cp-med-detail { font-size: 12px; color: #888; margin-top: 2px; }
+.cp-condition { padding: 6px 10px; background: #f5f5f5; border-radius: 6px; font-size: 13px; margin-bottom: 4px; }
+.cp-empty { color: #999; font-size: 13px; text-align: center; padding: 8px; }
+
+.cp-contact-item { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+.cp-contact-item:last-child { border: none; }
+.cp-contact-header { display: flex; align-items: center; gap: 8px; }
+.cp-contact-name { font-weight: 600; font-size: 15px; }
+.cp-primary-badge { font-size: 10px; padding: 2px 6px; background: #e3f2fd; color: #1565c0; border-radius: 6px; font-weight: 600; }
+.cp-contact-detail { font-size: 12px; color: #999; margin-top: 2px; }
+.cp-contact-phone { display: flex; align-items: center; gap: 4px; color: #00897B; font-size: 14px; margin-top: 4px; text-decoration: none; }
+.cp-pickup-badge { display: inline-block; margin-top: 4px; font-size: 11px; padding: 2px 8px; background: #e8f5e9; color: #2e7d32; border-radius: 6px; }
+
+.cp-pickup-note { font-size: 12px; color: #999; margin: 0 0 12px; }
+.cp-pickup-item { padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+.cp-pickup-item:last-child { border: none; }
+.cp-pickup-name { font-weight: 600; font-size: 14px; }
+.cp-pickup-detail { font-size: 12px; color: #888; margin-top: 2px; }
+.cp-pickup-pin { font-size: 12px; color: #00897B; font-weight: 600; margin-top: 4px; }

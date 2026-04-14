@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Admin - Mayuri School</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .credentials {
+            background: #fff3cd;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #ffeaa7;
+        }
+
+        .credentials strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #856404;
+        }
+
+        .credential-item {
+            margin: 4px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Setup Admin Account</h1>
+        <p class="subtitle">Create your first administrator account for Mayuri School</p>
+
+        <div id="message"></div>
+
+        <form id="setupForm">
+            <div class="form-group">
+                <label for="name">Full Name *</label>
+                <input type="text" id="name" required placeholder="e.g., Vignesh Kumar">
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username *</label>
+                <input type="text" id="username" required placeholder="e.g., admin">
+                <div class="hint">Login: <span id="usernamePreview">username</span>@mayuri</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <input type="password" id="password" required minlength="6" placeholder="Minimum 6 characters">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" placeholder="+91 9876543210">
+            </div>
+
+            <button type="submit" id="submitBtn">Create Admin Account</button>
+        </form>
+
+        <div id="successMessage" style="display: none;">
+            <div class="message success">
+                ✅ Admin account created successfully!
+            </div>
+            <div class="credentials">
+                <strong>🔐 Your Login Credentials:</strong>
+                <div class="credential-item">Username: <strong id="finalUsername"></strong></div>
+                <div class="credential-item">Email: <strong id="finalEmail"></strong></div>
+                <div class="credential-item">Password: <strong id="finalPassword"></strong></div>
+                <div style="margin-top: 12px; font-size: 12px; color: #856404;">
+                    ⚠️ Save these credentials securely!
+                </div>
+            </div>
+            <button onclick="window.location.href='/';" style="margin-top: 20px;">
+                Go to Login Page
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBktAXNzw4AIb2oeqUS41poSbnH45qR940",
+            authDomain: "school-c0203.firebaseapp.com",
+            projectId: "school-c0203",
+            storageBucket: "school-c0203.firebasestorage.app",
+            messagingSenderId: "910785587784",
+            appId: "1:910785587784:web:3875a96ee99fc7667bc67d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Update username preview
+        document.getElementById('username').addEventListener('input', (e) => {
+            document.getElementById('usernamePreview').textContent = e.target.value || 'username';
+        });
+
+        // Handle form submission
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('name').value.trim();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const phone = document.getElementById('phone').value.trim();
+
+            const email = `${username}@mayuri`;
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating Account...';
+                messageDiv.innerHTML = '';
+
+                // Create auth account
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const uid = userCredential.user.uid;
+
+                // Create user document in Firestore
+                await setDoc(doc(db, 'users', uid), {
+                    email: email,
+                    name: name,
+                    role: 'admin',
+                    phone: phone || '',
+                    approvalStatus: 'approved',
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
+
+                // Show success message
+                document.getElementById('finalUsername').textContent = username;
+                document.getElementById('finalEmail').textContent = email;
+                document.getElementById('finalPassword').textContent = password;
+
+                document.getElementById('setupForm').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                let errorMessage = 'Failed to create admin account. ';
+
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = '❌ Username already exists. Please choose a different username.';
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = '❌ Password is too weak. Please use at least 6 characters.';
+                } else {
+                    errorMessage += error.message;
+                }
+
+                messageDiv.innerHTML = `<div class="message error">${errorMessage}</div>`;
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Admin Account';
+            }
+        });
+    </script>
+</body>
+</html>
