@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, FileText, Download } from 'lucide-react';
 import { getReportsByChild } from '../../services/reportService';
-import type { StudentReport } from '../../services/reportService';
+import type { StudentReport as StudentReportData } from '../../services/reportService';
 import type { Child } from '../../types/index';
-import './ReportsPage.css';
+import './StudentReport.css';
 
-interface ReportsPageProps {
+interface StudentReportProps {
   onBack: () => void;
   child: Child;
 }
 
-const ReportsPage = ({ onBack, child }: ReportsPageProps) => {
-  const [reports, setReports] = useState<StudentReport[]>([]);
+const StudentReport = ({ onBack, child }: StudentReportProps) => {
+  const [reports, setReports] = useState<StudentReportData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedReport, setSelectedReport] = useState<StudentReport | null>(null);
+  const [selectedReport, setSelectedReport] = useState<StudentReportData | null>(null);
 
   useEffect(() => {
     const loadReports = async () => {
@@ -184,4 +184,4 @@ const ReportsPage = ({ onBack, child }: ReportsPageProps) => {
   );
 };
 
-export default ReportsPage;
+export default StudentReport;

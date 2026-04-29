@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, CheckCircle, LogIn, LogOut } from 'lucide-react';
+import { ChevronLeft, CheckCircle, LogIn, LogOut, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { recordCheckIn, recordCheckOut, getTodayCheckInsForChild } from '../../services/qrService';
+import { subscribeAppSettings } from '../../services/settingsService';
 import type { Child, CheckInRecord } from '../../types/index';
 import './QRScanner.css';
 
@@ -23,6 +24,12 @@ const QRCheckIn = ({ onBack, children: childrenProp }: QRScannerProps) => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ childName: string; type: string } | null>(null);
+  const [qrEnabled, setQrEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeAppSettings(s => setQrEnabled(s.qrCheckInEnabled));
+    return unsub;
+  }, []);
 
   useEffect(() => {
     const loadStatuses = async () => {
@@ -112,6 +119,22 @@ const QRCheckIn = ({ onBack, children: childrenProp }: QRScannerProps) => {
       setProcessing(null);
     }
   };
+
+  if (qrEnabled === false) {
+    return (
+      <div className="content">
+        <div className="page-header">
+          <button className="back-btn" onClick={onBack}><ChevronLeft size={24} /></button>
+          <h2 className="page-title">Check In / Out</h2>
+        </div>
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: '#666' }}>
+          <Lock size={48} style={{ opacity: 0.4, marginBottom: 16 }} />
+          <h3>QR check-in is disabled</h3>
+          <p>The school admin has disabled QR check-in right now.</p>
+        </div>
+      </div>
+    );
+  }
 
   // Success screen
   if (success) {

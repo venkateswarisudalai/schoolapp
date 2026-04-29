@@ -30,17 +30,19 @@ const ClassUpdateForm = ({ onBack }: ClassUpdateProps) => {
 
   const handleSubmit = async () => {
     if (!user || !summary.trim()) return;
+    if (type === 'weekly' && (!weekStart || !weekEnd)) {
+      alert('Pick both Week Start and Week End dates.');
+      return;
+    }
 
     setSaving(true);
     try {
       const cls = classes.find(c => c.id === classId);
-      await createClassUpdate({
+      const payload: Parameters<typeof createClassUpdate>[0] = {
         classId,
         className: cls?.name || '',
         type,
         date,
-        weekStart: type === 'weekly' ? weekStart : undefined,
-        weekEnd: type === 'weekly' ? weekEnd : undefined,
         teacherId: user.id,
         teacherName: user.name,
         summary: summary.trim(),
@@ -48,7 +50,12 @@ const ClassUpdateForm = ({ onBack }: ClassUpdateProps) => {
         homework: homework.trim(),
         reminders: reminders.trim(),
         createdAt: new Date().toISOString(),
-      });
+      };
+      if (type === 'weekly') {
+        payload.weekStart = weekStart;
+        payload.weekEnd = weekEnd;
+      }
+      await createClassUpdate(payload);
       setSaved(true);
       setTimeout(() => onBack(), 2000);
     } catch (error) {

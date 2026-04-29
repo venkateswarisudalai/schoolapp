@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ChevronLeft,
   Send,
@@ -35,7 +35,7 @@ interface ConversationWithDetails extends Conversation {
 
 const MessagesPage = ({ onBack }: MessagesPageProps) => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
+  const [rawConversations, setRawConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<ConversationWithDetails | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -47,32 +47,59 @@ const MessagesPage = ({ onBack }: MessagesPageProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load conversations
+  // Build a userId -> {name, role} lookup from loaded teachers + parents
+  const userLookup = useMemo(() => {
+    const map = new Map<string, { name: string; role: string }>();
+    teachers.forEach(t => map.set(t.id, { name: t.name, role: 'teacher' }));
+    parents.forEach(p => map.set(p.id, { name: p.name, role: 'parent' }));
+    return map;
+  }, [teachers, parents]);
+
+  // Subscribe to raw conversations
   useEffect(() => {
     if (!user) return;
 
     setLoading(true);
-    const unsubscribe = subscribeToConversations(user.id, async (convs) => {
-      const enrichedConvs = convs.map(conv => {
-        const convData = conv as any;
-        const lastMsg = conv.lastMessage as any;
-        return {
-          ...conv,
-          isClassGroup: convData.isClassGroup || false,
-          className: convData.className || '',
-          classId: convData.classId || '',
-          otherParticipantName: convData.isClassGroup
-            ? `📚 ${convData.className || 'Class Group'}`
-            : (lastMsg?.senderName || 'Chat'),
-          otherParticipantRole: lastMsg?.senderRole || 'user'
-        };
-      });
-      setConversations(enrichedConvs);
+    const unsubscribe = subscribeToConversations(user.id, (convs) => {
+      setRawConversations(convs);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [user]);
+
+  // Enrich conversations with the OTHER participant's name (not last sender)
+  const conversations: ConversationWithDetails[] = useMemo(() => {
+    if (!user) return [];
+    return rawConversations.map(conv => {
+      const convData = conv as any;
+      const lastMsg = conv.lastMessage as any;
+      const isClassGroup = !!convData.isClassGroup;
+
+      let otherParticipantName: string;
+      let otherParticipantRole: string;
+      if (isClassGroup) {
+        otherParticipantName = `📚 ${convData.className || 'Class Group'}`;
+        otherParticipantRole = 'group';
+      } else {
+        const otherId = (convData.participants || []).find((p: string) => p !== user.id);
+        const lookup = otherId ? userLookup.get(otherId) : undefined;
+        otherParticipantName = lookup?.name
+          || lastMsg?.senderName
+          || 'Chat';
+        otherParticipantRole = lookup?.role || lastMsg?.senderRole || 'user';
+      }
+
+      return {
+        ...conv,
+        isClassGroup,
+        className: convData.className || '',
+        classId: convData.classId || '',
+        otherParticipantName,
+        otherParticipantRole,
+      };
+    });
+  }, [rawConversations, userLookup, user]);
 
   // Load messages when conversation is selected
   useEffect(() => {

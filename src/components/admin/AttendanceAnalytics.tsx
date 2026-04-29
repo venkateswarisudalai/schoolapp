@@ -27,10 +27,17 @@ interface AttendanceAnalyticsProps {
   onBack: () => void;
 }
 
-type TimeRange = 'week' | 'month' | 'quarter';
+type TimeRange = 'week' | 'month' | 'quarter' | 'custom';
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const AttendanceAnalytics = ({ onBack }: AttendanceAnalyticsProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
+  const [customMonth, setCustomMonth] = useState(new Date().getMonth());
+  const [customYear, setCustomYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [overallStats, setOverallStats] = useState<AttendanceStats | null>(null);
   const [dailySummary, setDailySummary] = useState<DailyAttendanceSummary[]>([]);
@@ -38,23 +45,68 @@ const AttendanceAnalytics = ({ onBack }: AttendanceAnalyticsProps) => {
   const [weeklyTrend, setWeeklyTrend] = useState<{ week: string; rate: number }[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'daily' | 'students'>('overview');
 
+  const rangeLabel = () => {
+    if (timeRange === 'custom') {
+      return `${customYear}-${String(customMonth + 1).padStart(2, '0')}`;
+    }
+    return timeRange;
+  };
+
   const exportCSV = () => {
+    const label = rangeLabel();
     if (activeTab === 'students' && studentRecords.length > 0) {
       const header = 'Student Name,Total Days,Present,Absent,Late,Half Day,Attendance Rate\n';
       const rows = studentRecords.map(r =>
         `"${r.childName}",${r.stats.totalDays},${r.stats.present},${r.stats.absent},${r.stats.late},${r.stats.halfDay},${r.stats.attendanceRate}%`
       ).join('\n');
-      downloadCSV(header + rows, `attendance_students_${timeRange}.csv`);
+      downloadCSV(header + rows, `attendance_students_${label}.csv`);
     } else if (activeTab === 'daily' && dailySummary.length > 0) {
       const header = 'Date,Present,Absent,Late,Half Day,Total,Rate\n';
       const rows = dailySummary.map(d =>
         `${d.date},${d.present},${d.absent},${d.late},${d.halfDay},${d.total},${d.rate}%`
       ).join('\n');
-      downloadCSV(header + rows, `attendance_daily_${timeRange}.csv`);
+      downloadCSV(header + rows, `attendance_daily_${label}.csv`);
     } else if (overallStats) {
       const csv = `Metric,Value\nTotal Days,${overallStats.totalDays}\nPresent,${overallStats.present}\nAbsent,${overallStats.absent}\nLate,${overallStats.late}\nHalf Day,${overallStats.halfDay}\nAttendance Rate,${overallStats.attendanceRate}%`;
-      downloadCSV(csv, `attendance_overview_${timeRange}.csv`);
+      downloadCSV(csv, `attendance_overview_${label}.csv`);
     }
+  };
+
+  const exportMonthlyWorkbook = () => {
+    if (timeRange !== 'custom') return;
+    const monthTag = `${MONTH_NAMES[customMonth]}_${customYear}`;
+    const sections: string[] = [];
+
+    if (overallStats) {
+      sections.push('Overview');
+      sections.push('Metric,Value');
+      sections.push(`Total Days,${overallStats.totalDays}`);
+      sections.push(`Present,${overallStats.present}`);
+      sections.push(`Absent,${overallStats.absent}`);
+      sections.push(`Late,${overallStats.late}`);
+      sections.push(`Half Day,${overallStats.halfDay}`);
+      sections.push(`Attendance Rate,${overallStats.attendanceRate}%`);
+      sections.push('');
+    }
+
+    if (dailySummary.length > 0) {
+      sections.push('Daily Summary');
+      sections.push('Date,Present,Absent,Late,Half Day,Total,Rate');
+      dailySummary.forEach(d => {
+        sections.push(`${d.date},${d.present},${d.absent},${d.late},${d.halfDay},${d.total},${d.rate}%`);
+      });
+      sections.push('');
+    }
+
+    if (studentRecords.length > 0) {
+      sections.push('Student Report');
+      sections.push('Student Name,Total Days,Present,Absent,Late,Half Day,Attendance Rate');
+      studentRecords.forEach(r => {
+        sections.push(`"${r.childName}",${r.stats.totalDays},${r.stats.present},${r.stats.absent},${r.stats.late},${r.stats.halfDay},${r.stats.attendanceRate}%`);
+      });
+    }
+
+    downloadCSV(sections.join('\n'), `attendance_${monthTag}.csv`);
   };
 
   const downloadCSV = (content: string, filename: string) => {
@@ -67,6 +119,15 @@ const AttendanceAnalytics = ({ onBack }: AttendanceAnalyticsProps) => {
   };
 
   const getDateRange = (range: TimeRange): { start: string; end: string } => {
+    if (range === 'custom') {
+      const start = new Date(customYear, customMonth, 1);
+      const end = new Date(customYear, customMonth + 1, 0);
+      return {
+        start: start.toISOString().split('T')[0],
+        end: end.toISOString().split('T')[0]
+      };
+    }
+
     const end = new Date();
     const start = new Date();
 
@@ -118,7 +179,7 @@ const AttendanceAnalytics = ({ onBack }: AttendanceAnalyticsProps) => {
 
   useEffect(() => {
     loadAnalytics();
-  }, [timeRange]);
+  }, [timeRange, customMonth, customYear]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -184,7 +245,32 @@ const AttendanceAnalytics = ({ onBack }: AttendanceAnalyticsProps) => {
         >
           Last 3 Months
         </button>
+        <button
+          className={`range-btn ${timeRange === 'custom' ? 'active' : ''}`}
+          onClick={() => setTimeRange('custom')}
+        >
+          Pick Month
+        </button>
       </div>
+
+      {timeRange === 'custom' && (
+        <div className="month-picker-row" style={{ display: 'flex', gap: 8, padding: '0 12px 12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <select value={customMonth} onChange={(e) => setCustomMonth(Number(e.target.value))}>
+            {MONTH_NAMES.map((m, i) => (
+              <option key={m} value={i}>{m}</option>
+            ))}
+          </select>
+          <select value={customYear} onChange={(e) => setCustomYear(Number(e.target.value))}>
+            {Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - i).map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+          <button className="range-btn active" onClick={exportMonthlyWorkbook} style={{ marginLeft: 'auto' }}>
+            <Download size={16} style={{ marginRight: 4 }} />
+            Download Monthly Excel
+          </button>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="analytics-tabs">

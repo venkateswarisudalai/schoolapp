@@ -276,6 +276,7 @@ export interface Assignment {
   subject: string;
   attachments?: string[];
   status: 'active' | 'completed' | 'cancelled';
+  createdByRole?: 'admin' | 'teacher';
 }
 
 export interface AssignmentSubmission {
@@ -312,22 +313,23 @@ export interface QRToken {
   createdBy: string;
 }
 
-// Incident/Accident Report
-export interface IncidentReport {
+// Parent Concern — raised by parents, routed to teacher (general) or admin.
+export type ParentConcernScope = 'general' | 'admin';
+// Subcategories. Keep as free string so we can add more later without a migration.
+// General defaults: 'food', 'water'. Admin defaults: 'bonafide', 'fees'.
+export interface ParentConcern {
   id: string;
-  childId: string;
-  childName: string;
-  date: string;
-  time: string;
-  location: string;
-  description: string;
-  actionTaken: string;
-  severity: 'minor' | 'moderate' | 'serious';
-  witnesses: string[];
-  reportedBy: string;
-  reportedByName: string;
-  parentAcknowledged: boolean;
-  parentAcknowledgedAt?: string;
+  parentId: string;
+  parentName: string;
+  childId?: string;
+  childName?: string;
+  scope: ParentConcernScope;
+  subcategory: string;
+  message: string;
+  status: 'open' | 'resolved';
+  resolution?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
   createdAt: string;
 }
 

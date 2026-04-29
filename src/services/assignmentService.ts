@@ -45,6 +45,24 @@ export const getAssignmentsByTeacher = async (teacherId: string): Promise<Assign
   }
 };
 
+// Teacher's assignment list: their own + anything admin created school-wide.
+export const getAssignmentsForTeacher = async (teacherId: string): Promise<Assignment[]> => {
+  try {
+    const [ownSnap, adminSnap] = await Promise.all([
+      getDocs(query(collection(db, ASSIGNMENTS_COLLECTION), where('teacherId', '==', teacherId))),
+      getDocs(query(collection(db, ASSIGNMENTS_COLLECTION), where('createdByRole', '==', 'admin'))),
+    ]);
+    const map = new Map<string, Assignment>();
+    ownSnap.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() } as Assignment));
+    adminSnap.docs.forEach(d => map.set(d.id, { id: d.id, ...d.data() } as Assignment));
+    return Array.from(map.values())
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  } catch (error) {
+    console.error('Error getting assignments for teacher:', error);
+    return [];
+  }
+};
+
 export const getAllAssignments = async (): Promise<Assignment[]> => {
   try {
     const snap = await getDocs(collection(db, ASSIGNMENTS_COLLECTION));

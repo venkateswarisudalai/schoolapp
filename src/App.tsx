@@ -10,24 +10,27 @@ import StudentsPage from './components/admin/StudentsPage';
 import FeeAnalytics from './components/admin/FeeAnalytics';
 import ManageUsers from './components/admin/ManageUsers';
 import AttendanceAnalytics from './components/admin/AttendanceAnalytics';
+import QRAnalytics from './components/admin/QRAnalytics';
+import ParentConcernParent from './components/parent/ParentConcern';
+import ParentConcernTeacher from './components/teacher/ParentConcern';
+import ParentConcernAdmin from './components/admin/ParentConcern';
 import CreateAnnouncement from './components/admin/CreateAnnouncement';
 import AddGalleryPhoto from './components/admin/AddGalleryPhoto';
 import FeeManager from './components/admin/FeeManager';
-import IncidentReportForm from './components/teacher/IncidentReport';
 import ClassUpdateForm from './components/teacher/ClassUpdate';
 import ClassUpdatesView from './components/parent/ClassUpdates';
-import IncidentViewer from './components/parent/IncidentViewer';
+import AdminClassUpdates from './components/admin/ClassUpdates';
 import ChildProfile from './components/shared/ChildProfile';
-import ReportsPage from './components/parent/ReportsPage';
+import StudentReportView from './components/parent/StudentReport';
+import TeacherStudentReport from './components/teacher/StudentReport';
+import AdminStudentReport from './components/admin/StudentReport';
 import GalleryPage from './components/parent/GalleryPage';
 import CalendarPage from './components/parent/CalendarPage';
 import MessagesPage from './components/shared/MessagesPage';
 import Assignments from './components/teacher/Assignments';
 import LessonPlanner from './components/teacher/LessonPlanner';
-import ActivityLogger from './components/teacher/ActivityLogger';
 import FeedPostCreator from './components/teacher/FeedPostCreator';
 import QRCodeDisplay from './components/teacher/QRCodeDisplay';
-import ActivityFeed from './components/parent/ActivityFeed';
 import QRScanner from './components/parent/QRScanner';
 import DailyReportPage from './components/parent/DailyReport';
 import ProfilePage from './components/shared/ProfilePage';
@@ -47,7 +50,6 @@ import {
   CreditCard,
   FileText,
   Camera,
-  ClipboardList,
   Heart,
   UserCheck,
   UserPlus,
@@ -61,7 +63,6 @@ import {
   Rss,
   FileBarChart,
   IndianRupee,
-  AlertTriangle,
   Shield,
 } from 'lucide-react';
 import { mockClasses, mockLessonPlans } from './data/mockData';
@@ -249,12 +250,6 @@ const ParentDashboard = ({ setCurrentPage, children, activities, announcements }
           </div>
           <span className="quick-action-label">Attendance</span>
         </button>
-        <button className="quick-action" onClick={() => setCurrentPage('activities')}>
-          <div className="quick-action-icon activities">
-            <ClipboardList size={24} />
-          </div>
-          <span className="quick-action-label">Activities</span>
-        </button>
         <button className="quick-action" onClick={() => setCurrentPage('messages')}>
           <div className="quick-action-icon messages">
             <MessageSquare size={24} />
@@ -291,12 +286,6 @@ const ParentDashboard = ({ setCurrentPage, children, activities, announcements }
           </div>
           <span className="quick-action-label">Gallery</span>
         </button>
-        <button className="quick-action" onClick={() => setCurrentPage('activity-feed')}>
-          <div className="quick-action-icon feed">
-            <Rss size={24} />
-          </div>
-          <span className="quick-action-label">Feed</span>
-        </button>
         <button className="quick-action" onClick={() => setCurrentPage('qr-scan')}>
           <div className="quick-action-icon qr">
             <QrCode size={24} />
@@ -315,11 +304,11 @@ const ParentDashboard = ({ setCurrentPage, children, activities, announcements }
           </div>
           <span className="quick-action-label">Class Updates</span>
         </button>
-        <button className="quick-action" onClick={() => setCurrentPage('incidents')}>
-          <div className="quick-action-icon incident">
-            <AlertTriangle size={24} />
+        <button className="quick-action" onClick={() => setCurrentPage('concerns')}>
+          <div className="quick-action-icon messages">
+            <MessageSquare size={24} />
           </div>
-          <span className="quick-action-label">Incidents</span>
+          <span className="quick-action-label">Concerns</span>
         </button>
         <button className="quick-action" onClick={() => setCurrentPage('child-profile')}>
           <div className="quick-action-icon child-profile">
@@ -425,12 +414,6 @@ const TeacherDashboard = ({ setCurrentPage }: { setCurrentPage: (page: string) =
           </div>
           <span className="quick-action-label">Planner</span>
         </button>
-        <button className="quick-action" onClick={() => setCurrentPage('log-activity')}>
-          <div className="quick-action-icon activities">
-            <ClipboardList size={24} />
-          </div>
-          <span className="quick-action-label">Log Activity</span>
-        </button>
         <button className="quick-action" onClick={() => setCurrentPage('messages')}>
           <div className="quick-action-icon messages">
             <MessageSquare size={24} />
@@ -455,6 +438,12 @@ const TeacherDashboard = ({ setCurrentPage }: { setCurrentPage: (page: string) =
           </div>
           <span className="quick-action-label">Photos</span>
         </button>
+        <button className="quick-action" onClick={() => setCurrentPage('concerns')}>
+          <div className="quick-action-icon messages">
+            <MessageSquare size={24} />
+          </div>
+          <span className="quick-action-label">Concerns</span>
+        </button>
         <button className="quick-action" onClick={() => setCurrentPage('announcements')}>
           <div className="quick-action-icon announcements">
             <Bell size={24} />
@@ -478,12 +467,6 @@ const TeacherDashboard = ({ setCurrentPage }: { setCurrentPage: (page: string) =
             <FileBarChart size={24} />
           </div>
           <span className="quick-action-label">Class Update</span>
-        </button>
-        <button className="quick-action" onClick={() => setCurrentPage('incident-report')}>
-          <div className="quick-action-icon incident">
-            <AlertTriangle size={24} />
-          </div>
-          <span className="quick-action-label">Incident</span>
         </button>
       </div>
 
@@ -639,6 +622,24 @@ const AdminDashboard = ({ setCurrentPage, children, teachers, announcements: _an
             <FileEdit size={24} />
           </div>
           <span className="quick-action-label">Assignments</span>
+        </button>
+        <button className="quick-action" onClick={() => setCurrentPage('qr-analytics')}>
+          <div className="quick-action-icon qr">
+            <QrCode size={24} />
+          </div>
+          <span className="quick-action-label">QR Check-in</span>
+        </button>
+        <button className="quick-action" onClick={() => setCurrentPage('concerns')}>
+          <div className="quick-action-icon messages">
+            <MessageSquare size={24} />
+          </div>
+          <span className="quick-action-label">Concerns</span>
+        </button>
+        <button className="quick-action" onClick={() => setCurrentPage('class-updates')}>
+          <div className="quick-action-icon daily-report">
+            <FileBarChart size={24} />
+          </div>
+          <span className="quick-action-label">Class Updates</span>
         </button>
       </div>
 
@@ -1249,7 +1250,13 @@ const MainApp = () => {
       case 'calendar':
         return <CalendarPage onBack={() => setCurrentPage('home')} />;
       case 'reports':
-        return children[0] ? <ReportsPage onBack={() => setCurrentPage('home')} child={children[0]} /> : <div>No student found</div>;
+        if (user.role === 'admin') {
+          return <AdminStudentReport onBack={() => setCurrentPage('home')} />;
+        }
+        if (user.role === 'teacher') {
+          return <TeacherStudentReport onBack={() => setCurrentPage('home')} />;
+        }
+        return children[0] ? <StudentReportView onBack={() => setCurrentPage('home')} child={children[0]} /> : <div>No student found</div>;
       case 'gallery':
         return <GalleryPage onBack={() => setCurrentPage('home')} />;
       case 'fee-analytics':
@@ -1279,17 +1286,19 @@ const MainApp = () => {
       case 'attendance-analytics':
         if (!isAdmin) { setCurrentPage('home'); return null; }
         return <AttendanceAnalytics onBack={() => setCurrentPage('home')} />;
+      case 'qr-analytics':
+        if (!isAdmin) { setCurrentPage('home'); return null; }
+        return <QRAnalytics onBack={() => setCurrentPage('home')} />;
+      case 'concerns':
+        if (user.role === 'admin') return <ParentConcernAdmin onBack={() => setCurrentPage('home')} />;
+        if (user.role === 'teacher') return <ParentConcernTeacher onBack={() => setCurrentPage('home')} />;
+        return <ParentConcernParent onBack={() => setCurrentPage('home')} children={children} />;
       case 'assignments':
         if (!isTeacherOrAdmin) { setCurrentPage('home'); return null; }
         return <Assignments onBack={() => setCurrentPage('home')} />;
       case 'planner':
         if (!isTeacherOrAdmin) { setCurrentPage('home'); return null; }
         return <LessonPlanner onBack={() => setCurrentPage('home')} />;
-      case 'log-activity':
-        if (!isTeacherOrAdmin) { setCurrentPage('home'); return null; }
-        return <ActivityLogger onBack={() => setCurrentPage('home')} children={children} />;
-      case 'activity-feed':
-        return <ActivityFeed onBack={() => setCurrentPage('home')} children={children} />;
       case 'create-feed-post':
         if (!isTeacherOrAdmin) { setCurrentPage('home'); return null; }
         return <FeedPostCreator onBack={() => setCurrentPage('home')} children={children} />;
@@ -1300,16 +1309,12 @@ const MainApp = () => {
         return <QRScanner onBack={() => setCurrentPage('home')} children={children} />;
       case 'daily-report':
         return <DailyReportPage onBack={() => setCurrentPage('home')} children={children} />;
-      case 'incident-report':
-        if (!isTeacherOrAdmin) { setCurrentPage('home'); return null; }
-        return <IncidentReportForm onBack={() => setCurrentPage('home')} children={children} />;
       case 'class-update':
         if (!isTeacherOrAdmin) { setCurrentPage('home'); return null; }
         return <ClassUpdateForm onBack={() => setCurrentPage('home')} />;
       case 'class-updates':
+        if (user.role === 'admin') return <AdminClassUpdates onBack={() => setCurrentPage('home')} />;
         return <ClassUpdatesView onBack={() => setCurrentPage('home')} children={children} />;
-      case 'incidents':
-        return <IncidentViewer onBack={() => setCurrentPage('home')} children={children} />;
       case 'child-profile':
         return children[0] ? <ChildProfile onBack={() => setCurrentPage('home')} child={children[0]} /> : <div className="content"><p style={{padding:'40px',textAlign:'center'}}>No student found</p></div>;
       case 'profile':

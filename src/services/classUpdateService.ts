@@ -61,3 +61,16 @@ export const getLatestUpdateForClass = async (classId: string): Promise<ClassUpd
   const updates = await getClassUpdates(classId, 1);
   return updates[0] || null;
 };
+
+export const getAllClassUpdates = async (limit = 100): Promise<ClassUpdate[]> => {
+  try {
+    const snap = await getDocs(collection(db, COLLECTION));
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as ClassUpdate))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
+  } catch (error) {
+    console.error('Error getting all class updates:', error);
+    return [];
+  }
+};

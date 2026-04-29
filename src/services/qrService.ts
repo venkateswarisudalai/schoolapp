@@ -184,3 +184,21 @@ export const getTodayCheckInsForChild = async (childId: string): Promise<CheckIn
   const today = new Date().toISOString().split('T')[0];
   return getCheckInRecordsByChild(childId, today);
 };
+
+// Fetch all check-in records between two ISO dates (inclusive). Used for admin QR analytics.
+export const getAllCheckInsInRange = async (startDate: string, endDate: string): Promise<CheckInRecord[]> => {
+  try {
+    const startIso = new Date(startDate + 'T00:00:00').toISOString();
+    const endIso = new Date(endDate + 'T23:59:59').toISOString();
+    const q = query(
+      collection(db, CHECKIN_COLLECTION),
+      where('timestamp', '>=', startIso),
+      where('timestamp', '<=', endIso),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as CheckInRecord));
+  } catch (error) {
+    console.error('Error getting check-ins in range:', error);
+    return [];
+  }
+};

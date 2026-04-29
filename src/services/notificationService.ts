@@ -68,7 +68,7 @@ export interface AppNotification {
   userId: string;
   title: string;
   body: string;
-  type: 'message' | 'announcement' | 'fee' | 'attendance' | 'report' | 'incident';
+  type: 'message' | 'announcement' | 'fee' | 'attendance' | 'report';
   read: boolean;
   createdAt: string;
   data?: Record<string, string>;
