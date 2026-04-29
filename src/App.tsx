@@ -266,7 +266,7 @@ const ParentDashboard = ({ setCurrentPage, children, activities, announcements }
           <div className="quick-action-icon announcements">
             <Bell size={24} />
           </div>
-          <span className="quick-action-label">Notices</span>
+          <span className="quick-action-label">Announcements</span>
         </button>
         <button className="quick-action" onClick={() => setCurrentPage('calendar')}>
           <div className="quick-action-icon calendar">
@@ -448,7 +448,7 @@ const TeacherDashboard = ({ setCurrentPage }: { setCurrentPage: (page: string) =
           <div className="quick-action-icon announcements">
             <Bell size={24} />
           </div>
-          <span className="quick-action-label">Notices</span>
+          <span className="quick-action-label">Announcements</span>
         </button>
         <button className="quick-action" onClick={() => setCurrentPage('create-feed-post')}>
           <div className="quick-action-icon feed">
@@ -1384,7 +1384,7 @@ const MainApp = () => {
             onClick={() => { setActiveNav('notifications'); setCurrentPage('announcements'); }}
           >
             <Bell size={24} className="nav-item-icon" />
-            <span className="nav-item-label">Notices</span>
+            <span className="nav-item-label">Announcements</span>
           </button>
           <button
             className={`nav-item ${activeNav === 'profile' ? 'active' : ''}`}
