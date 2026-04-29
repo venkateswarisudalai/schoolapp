@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createGalleryPhoto } from '../../services/galleryService';
-import { ChevronLeft, Image as ImageIcon } from 'lucide-react';
+import { createGalleryPhoto, uploadGalleryPhotoFile } from '../../services/galleryService';
+import { ChevronLeft, Image as ImageIcon, Upload } from 'lucide-react';
 import './AddGalleryPhoto.css';
 
 interface AddGalleryPhotoProps {
@@ -13,10 +13,20 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
   const [category, setCategory] = useState<'activity' | 'event' | 'classroom' | 'outdoor' | 'celebration'>('activity');
   const [classId, setClassId] = useState('');
   const [adding, setAdding] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [success, setSuccess] = useState(false);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    setFile(f);
+    setFilePreview(f ? URL.createObjectURL(f) : null);
+    if (f) setImageUrl('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,23 +36,29 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
       return;
     }
 
-    if (!imageUrl.startsWith('http')) {
-      alert('Please enter a valid image URL starting with http:// or https://');
+    if (!file && !imageUrl.startsWith('http')) {
+      alert('Select a photo to upload or paste an image URL.');
       return;
     }
 
     setAdding(true);
 
     try {
-      const photoData = {
+      let finalUrl = imageUrl;
+      if (file) {
+        setProgress(0);
+        finalUrl = await uploadGalleryPhotoFile(file, p => setProgress(p));
+      }
+
+      const photoData: Parameters<typeof createGalleryPhoto>[0] = {
         title,
         description,
-        imageUrl,
+        imageUrl: finalUrl,
         date: new Date().toISOString(),
         category,
-        classId: classId || undefined,
         uploadedBy: user.id,
       };
+      if (classId) photoData.classId = classId;
 
       await createGalleryPhoto(photoData);
 
@@ -50,9 +66,16 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
       setTimeout(() => {
         onBack();
       }, 2000);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error adding photo:', error);
-      alert('Failed to add photo. Please try again.');
+      const err = error as { code?: string; message?: string };
+      let msg = err.message || 'Failed to add photo.';
+      if (err.code === 'storage/unauthorized') {
+        msg = 'Upload denied. Make sure you are logged in as admin/teacher and storage rules are deployed.';
+      } else if (err.code === 'storage/object-not-found' || err.code === 'storage/unknown') {
+        msg = 'Storage is not set up for this Firebase project yet. Open Firebase console → Storage → Get Started.';
+      }
+      alert(msg);
     } finally {
       setAdding(false);
     }
@@ -82,21 +105,31 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
       <div className="add-photo-container">
         <form onSubmit={handleSubmit} className="photo-form">
           <div className="form-group">
-            <label htmlFor="imageUrl">Image URL *</label>
+            <label htmlFor="photoFile">Upload Photo</label>
+            <input
+              type="file"
+              id="photoFile"
+              accept="image/*"
+              onChange={onFileChange}
+            />
+            <small>Pick a photo from your device. Max 5MB.</small>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="imageUrl">…or paste Image URL</label>
             <input
               type="url"
               id="imageUrl"
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
+              onChange={(e) => { setImageUrl(e.target.value); if (e.target.value) { setFile(null); setFilePreview(null); } }}
               placeholder="https://example.com/image.jpg"
-              required
+              disabled={!!file}
             />
-            <small>Enter a direct link to an image (e.g., from Google Photos, Imgur, etc.)</small>
           </div>
 
-          {imageUrl && (
+          {(filePreview || imageUrl) && (
             <div className="image-preview">
-              <img src={imageUrl} alt="Preview" onError={(e) => {
+              <img src={filePreview || imageUrl} alt="Preview" onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
               }} />
             </div>
@@ -155,16 +188,25 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
             </select>
           </div>
 
+          {adding && file && (
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${progress}%`, height: '100%', background: '#2563eb', transition: 'width 0.2s' }} />
+              </div>
+              <small style={{ color: '#64748b' }}>Uploading… {progress}%</small>
+            </div>
+          )}
+
           <button
             type="submit"
             className="btn btn-primary btn-block add-btn"
             disabled={adding}
           >
             {adding ? (
-              'Adding Photo...'
+              file ? `Uploading… ${progress}%` : 'Adding Photo...'
             ) : (
               <>
-                <ImageIcon size={20} />
+                {file ? <Upload size={20} /> : <ImageIcon size={20} />}
                 <span>Add Photo to Gallery</span>
               </>
             )}

@@ -286,19 +286,22 @@ export const markConversationAsRead = async (
       await updateDoc(conversationRef, { unreadCount });
     }
 
-    // Mark individual messages as read
+    // Mark individual messages as read.
+    // Note: combining `==` and `!=` filters in Firestore requires an awkward
+    // composite index and was failing silently. Filter sender client-side instead.
     const q = query(
       collection(db, CONVERSATIONS_COLLECTION, conversationId, MESSAGES_COLLECTION),
-      where('isRead', '==', false),
-      where('senderId', '!=', userId)
+      where('isRead', '==', false)
     );
 
     const querySnapshot = await getDocs(q);
-    const updatePromises = querySnapshot.docs.map(msgDoc =>
-      updateDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId, MESSAGES_COLLECTION, msgDoc.id), {
-        isRead: true
-      })
-    );
+    const updatePromises = querySnapshot.docs
+      .filter(msgDoc => msgDoc.data().senderId !== userId)
+      .map(msgDoc =>
+        updateDoc(doc(db, CONVERSATIONS_COLLECTION, conversationId, MESSAGES_COLLECTION, msgDoc.id), {
+          isRead: true
+        })
+      );
 
     await Promise.all(updatePromises);
   } catch (error) {

@@ -1,6 +1,7 @@
-import { useRef } from 'react';
-import { ChevronLeft, Printer } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, Printer, Lock } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { subscribeAppSettings } from '../../services/settingsService';
 import './QRCodeDisplay.css';
 
 interface QRCodeDisplayProps {
@@ -11,6 +12,28 @@ const SCHOOL_CHECKIN_URL = 'https://school-c0203.web.app?action=checkin';
 
 const QRCodeDisplay = ({ onBack }: QRCodeDisplayProps) => {
   const printRef = useRef<HTMLDivElement>(null);
+  const [qrEnabled, setQrEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const unsub = subscribeAppSettings(s => setQrEnabled(s.qrCheckInEnabled));
+    return unsub;
+  }, []);
+
+  if (qrEnabled === false) {
+    return (
+      <div className="content">
+        <div className="page-header">
+          <button className="back-btn" onClick={onBack}><ChevronLeft size={24} /></button>
+          <h2 className="page-title">QR Check-in</h2>
+        </div>
+        <div style={{ padding: '60px 20px', textAlign: 'center', color: '#666' }}>
+          <Lock size={48} style={{ opacity: 0.4, marginBottom: 16 }} />
+          <h3>QR check-in is disabled</h3>
+          <p>Ask the admin to enable QR check-in from Settings.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');

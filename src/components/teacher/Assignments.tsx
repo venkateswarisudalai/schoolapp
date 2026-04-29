@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, Plus, BookOpen, Calendar, Clock, Trash2, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { createAssignment, getAssignmentsByTeacher, getAllAssignments, deleteAssignment, getSubmissionsByAssignment } from '../../services/assignmentService';
+import { createAssignment, getAssignmentsForTeacher, getAllAssignments, deleteAssignment, getSubmissionsByAssignment } from '../../services/assignmentService';
 import { mockClasses } from '../../data/mockData';
 import type { Assignment, AssignmentSubmission } from '../../types/index';
 import './Assignments.css';
@@ -37,7 +37,7 @@ const Assignments = ({ onBack }: AssignmentsProps) => {
     try {
       const data = user.role === 'admin'
         ? await getAllAssignments()
-        : await getAssignmentsByTeacher(user.id);
+        : await getAssignmentsForTeacher(user.id);
       setAssignments(data);
     } catch (error) {
       console.error('Error loading assignments:', error);
@@ -63,6 +63,7 @@ const Assignments = ({ onBack }: AssignmentsProps) => {
         type,
         subject,
         status: 'active',
+        createdByRole: user.role === 'admin' ? 'admin' : 'teacher',
       });
       // Reset form
       setTitle('');
