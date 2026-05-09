@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createGalleryPhoto, uploadGalleryPhotoFile } from '../../services/galleryService';
-import { ChevronLeft, Image as ImageIcon, Upload } from 'lucide-react';
+import { ChevronLeft, Image as ImageIcon, Upload, X } from 'lucide-react';
 import './AddGalleryPhoto.css';
 
 interface AddGalleryPhotoProps {
@@ -10,6 +10,7 @@ interface AddGalleryPhotoProps {
 
 const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
   const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -28,6 +29,12 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
     if (f) setImageUrl('');
   };
 
+  const clearFile = () => {
+    setFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -36,15 +43,16 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
       return;
     }
 
-    if (!file && !imageUrl.startsWith('http')) {
-      alert('Select a photo to upload or paste an image URL.');
+    const trimmedUrl = imageUrl.trim();
+    if (!file && !/^https?:\/\//i.test(trimmedUrl)) {
+      alert('Select a photo to upload or paste an image URL starting with http:// or https://.');
       return;
     }
 
     setAdding(true);
 
     try {
-      let finalUrl = imageUrl;
+      let finalUrl = trimmedUrl;
       if (file) {
         setProgress(0);
         finalUrl = await uploadGalleryPhotoFile(file, p => setProgress(p));
@@ -110,18 +118,34 @@ const AddGalleryPhoto = ({ onBack }: AddGalleryPhotoProps) => {
               type="file"
               id="photoFile"
               accept="image/*"
+              ref={fileInputRef}
               onChange={onFileChange}
             />
-            <small>Pick a photo from your device. Max 5MB.</small>
+            {file ? (
+              <button
+                type="button"
+                onClick={clearFile}
+                style={{
+                  marginTop: 6, background: '#fef2f2', color: '#b91c1c',
+                  border: '1px solid #fecaca', padding: '4px 8px',
+                  borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}
+              >
+                <X size={12} /> Clear file ({file.name})
+              </button>
+            ) : (
+              <small>Pick a photo from your device. Max 5MB.</small>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="imageUrl">…or paste Image URL</label>
             <input
-              type="url"
+              type="text"
               id="imageUrl"
               value={imageUrl}
-              onChange={(e) => { setImageUrl(e.target.value); if (e.target.value) { setFile(null); setFilePreview(null); } }}
+              onChange={(e) => { setImageUrl(e.target.value); if (e.target.value && file) clearFile(); }}
               placeholder="https://example.com/image.jpg"
               disabled={!!file}
             />
