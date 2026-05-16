@@ -274,3 +274,103 @@
   font-weight: 500;
   cursor: pointer;
 }
+
+/* Term Payment Modal */
+.term-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.term-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.term-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.term-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.term-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.term-modal-body {
+  padding: 16px 20px;
+}
+
+.term-modal-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 20px;
+  border-top: 1px solid #eee;
+}
+
+.term-modal-footer .btn {
+  flex: 1;
+}
+
+.term-months-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.term-month-btn {
+  padding: 10px 8px;
+  border: 1.5px solid #ddd;
+  background: #fff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.term-month-btn.selected {
+  border-color: #4caf50;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.term-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.term-total strong {
+  font-size: 18px;
+  color: #1565c0;
+}

@@ -3,6 +3,28 @@ import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, deleteDoc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 import type { UserRole, AllergyInfo, MedicationInfo, EmergencyContact, AuthorizedPickup } from '../types/index';
+import { getClassCode } from '../data/classes';
+
+// Generate next admission number for a class: mkp-{code}-{NN}.
+// Looks at existing children in that class, finds the max roll number, returns max+1
+// zero-padded to 2 digits (3 digits if it grows past 99).
+const generateAdmissionNumber = async (classId: string): Promise<string> => {
+  const code = getClassCode(classId);
+  const snap = await getDocs(query(collection(db, 'children'), where('classId', '==', classId)));
+  let maxRoll = 0;
+  const pattern = new RegExp(`^mkp-${code}-(\\d+)$`, 'i');
+  snap.docs.forEach(d => {
+    const adm = (d.data().admissionNumber || '') as string;
+    const m = adm.match(pattern);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n > maxRoll) maxRoll = n;
+    }
+  });
+  const next = maxRoll + 1;
+  const padded = next < 100 ? String(next).padStart(2, '0') : String(next);
+  return `mkp-${code}-${padded}`;
+};
 
 // Create a secondary Firebase app for user creation to avoid switching the admin's session
 const createUserWithoutSignIn = async (email: string, password: string) => {
@@ -88,6 +110,7 @@ export interface CreateStudentData {
 export const adminCreateStudent = async (data: CreateStudentData): Promise<{
   parentUserId: string;
   studentId: string;
+  admissionNumber: string;
   parentUsername: string;
   parentEmail: string;
 }> => {
@@ -103,11 +126,13 @@ export const adminCreateStudent = async (data: CreateStudentData): Promise<{
     // Create parent auth account with real email
     const parentUserId = await createUserWithoutSignIn(parentEmail, data.parentPassword);
 
-    // Generate student ID
+    // Generate student ID (internal Firestore key) + admission number (human-readable)
     const studentId = `student_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const admissionNumber = await generateAdmissionNumber(data.classId);
 
     // Create child document with ALL details
     await setDoc(doc(db, 'children', studentId), {
+      admissionNumber,
       name: data.studentName,
       dateOfBirth: data.dateOfBirth,
       gender: data.gender,
@@ -142,7 +167,7 @@ export const adminCreateStudent = async (data: CreateStudentData): Promise<{
       createdBy: adminUid,
     });
 
-    return { parentUserId, studentId, parentUsername, parentEmail };
+    return { parentUserId, studentId, admissionNumber, parentUsername, parentEmail };
   } catch (error) {
     console.error('Error creating student:', error);
     throw error;

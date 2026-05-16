@@ -40,7 +40,7 @@ const CreateStudent = ({ onBack }: CreateStudentProps) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<{ parentUsername: string; parentEmail: string } | null>(null);
+  const [result, setResult] = useState<{ parentUsername: string; parentEmail: string; admissionNumber: string } | null>(null);
 
   const addAllergy = () => setAllergies(prev => [...prev, { allergen: '', severity: 'mild', actionPlan: '' }]);
   const removeAllergy = (i: number) => setAllergies(prev => prev.filter((_, idx) => idx !== i));
@@ -83,7 +83,11 @@ const CreateStudent = ({ onBack }: CreateStudentProps) => {
         emergencyContacts: emergencyContacts.filter(c => c.name.trim() && c.phone.trim()),
         authorizedPickups: authorizedPickups.filter(p => p.name.trim() && p.phone.trim()),
       });
-      setResult(res);
+      setResult({
+        parentUsername: res.parentUsername,
+        parentEmail: res.parentEmail,
+        admissionNumber: res.admissionNumber,
+      });
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create student');
@@ -99,6 +103,14 @@ const CreateStudent = ({ onBack }: CreateStudentProps) => {
           <div style={{ width: '80px', height: '80px', background: 'linear-gradient(135deg, #4CAF50, #45a049)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', color: 'white', fontSize: '48px' }}>✓</div>
           <h2>Student Created!</h2>
           <p style={{ marginBottom: '20px' }}>{studentName} has been added successfully.</p>
+
+          <div style={{ background: '#e3f2fd', padding: '16px', borderRadius: '12px', textAlign: 'left', marginBottom: '12px' }}>
+            <strong>Admission Number:</strong><br />
+            <span style={{ fontSize: '20px', fontWeight: 700, color: '#1565c0', letterSpacing: '1px' }}>
+              {result.admissionNumber}
+            </span><br />
+            <small style={{ color: '#666' }}>Use this on receipts and for parent reference.</small>
+          </div>
 
           <div style={{ background: '#e8f5e9', padding: '16px', borderRadius: '12px', textAlign: 'left', marginBottom: '12px' }}>
             <strong>Parent Login Credentials:</strong><br />
