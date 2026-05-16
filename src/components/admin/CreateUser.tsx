@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import { adminCreateUser } from '../../services/adminService';
 import type { UserRole } from '../../types/index';
+import { CLASSES, type ClassCode } from '../../data/classes';
 import './CreateUser.css';
+
+// Slot used inside the username after "mkp.". For teachers it's the class code (prekg/lkg/ukg).
+// For admins it's just "admin". The combined username becomes mkp.{slot}.{firstname}.
+type UsernameSlot = ClassCode | 'admin';
 
 interface CreateUserProps {
   onBack: () => void;
@@ -10,7 +15,8 @@ interface CreateUserProps {
 const CreateUser: React.FC<CreateUserProps> = ({ onBack }) => {
   const [formData, setFormData] = useState({
     name: '',
-    username: '',
+    firstName: '',
+    slot: 'prekg' as UsernameSlot,
     password: 'Teacher@123',
     phone: '',
     role: 'teacher' as UserRole,
@@ -21,21 +27,39 @@ const CreateUser: React.FC<CreateUserProps> = ({ onBack }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Build username from slot + firstName. Strips non-alphanumerics and lowercases.
+  const cleanFirst = formData.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const username = cleanFirst
+    ? `mkp.${formData.slot}.${cleanFirst}`
+    : `mkp.${formData.slot}`;
+  const email = `${username}@mayurischool.com`;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const next = { ...formData, [e.target.name]: e.target.value };
+    // When role flips between teacher/admin/parent, snap the slot to a sensible default
+    if (e.target.name === 'role') {
+      next.slot = e.target.value === 'admin' ? 'admin' : 'prekg';
+    }
+    setFormData(next);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!cleanFirst) {
+      setError('Enter a first name for the username.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // Build email from username
-      const email = `${formData.username}@mayurischool.com`;
+      // For teachers tied to a class, default assignedClasses to the matching class
+      const matchedClass = CLASSES.find(c => c.code === formData.slot);
+      const assignedClasses = formData.role === 'teacher' && matchedClass
+        ? [matchedClass.id]
+        : undefined;
 
       // Create user with admin service (auto-approved)
       await adminCreateUser({
@@ -46,6 +70,7 @@ const CreateUser: React.FC<CreateUserProps> = ({ onBack }) => {
         phone: formData.phone,
         qualification: formData.qualification,
         salary: formData.salary ? Number(formData.salary) : undefined,
+        assignedClasses,
       });
 
       setSuccess(true);
@@ -61,8 +86,6 @@ const CreateUser: React.FC<CreateUserProps> = ({ onBack }) => {
   };
 
   if (success) {
-    const email = `${formData.username}@mayurischool.com`;
-
     return (
       <div className="create-user-container">
         <div className="success-message">
@@ -71,7 +94,7 @@ const CreateUser: React.FC<CreateUserProps> = ({ onBack }) => {
           <p>The new {formData.role} "{formData.name}" has been created and approved!</p>
           <div style={{ background: '#fff3cd', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
             <strong>Login Credentials:</strong><br/>
-            Username: {formData.username}<br/>
+            Username: {username}<br/>
             Email: {email}<br/>
             Password: {formData.password}<br/>
             <small style={{color: '#666', display: 'block', marginTop: '8px'}}>
@@ -121,17 +144,39 @@ const CreateUser: React.FC<CreateUserProps> = ({ onBack }) => {
 
         <div className="form-group">
           <label>Username *</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            placeholder="e.g., priya"
-            required
-            className="form-input"
-          />
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <span style={{ color: '#666', fontWeight: 600, whiteSpace: 'nowrap' }}>mkp.</span>
+            <select
+              name="slot"
+              value={formData.slot}
+              onChange={handleChange}
+              className="form-select"
+              style={{ maxWidth: '140px' }}
+            >
+              {formData.role === 'admin' ? (
+                <option value="admin">admin</option>
+              ) : (
+                <>
+                  <option value="prekg">prekg</option>
+                  <option value="lkg">lkg</option>
+                  <option value="ukg">ukg</option>
+                </>
+              )}
+            </select>
+            <span style={{ color: '#666' }}>.</span>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              placeholder="firstname"
+              required
+              className="form-input"
+              style={{ flex: 1 }}
+            />
+          </div>
           <small className="form-hint">
-            Login: {formData.username || 'username'}@mayurischool.com
+            Login: <strong>{username}</strong>@mayurischool.com
           </small>
         </div>
 

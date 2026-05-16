@@ -34,6 +34,9 @@ export interface Admin extends User {
 // Child/Student Types
 export interface Child {
   id: string;
+  // Human-readable admission ID — e.g. mkp-prekg-01, mkp-lkg-25, mkp-ukg-12.
+  // Optional on the type because legacy records were created before this field existed.
+  admissionNumber?: string;
   name: string;
   dateOfBirth: string;
   gender: 'male' | 'female';
@@ -199,6 +202,8 @@ export interface FeeStructure {
   applicableClasses: string[];
 }
 
+export type FeeCategory = 'monthly' | 'admission' | 'annual' | 'misc';
+
 export interface FeePayment {
   id: string;
   childId: string;
@@ -210,6 +215,13 @@ export interface FeePayment {
   paymentMethod?: 'cash' | 'card' | 'upi' | 'bank-transfer';
   transactionId?: string;
   receiptNumber?: string;
+  // Category of the charge — defaults to 'monthly' for legacy records that don't have this field
+  category?: FeeCategory;
+  // Free-text label for non-monthly charges (e.g. "Annual Day 2026", "Books Set", "Admission Fee")
+  label?: string;
+  // For monthly charges: which month/year this record covers (0-indexed month). Easier filtering than parsing dueDate.
+  month?: number;
+  year?: number;
 }
 
 // Document Types

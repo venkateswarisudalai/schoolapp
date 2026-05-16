@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAllChildren } from '../../services/childrenService';
-import { getFeePaymentsByChild } from '../../services/feeService';
+import { getFeePaymentsByChild, getAllFeeConfigs } from '../../services/feeService';
+import type { FeeConfig } from '../../services/feeService';
 import type { Child, FeePayment } from '../../types/index';
 import './FeeAnalytics.css';
 
@@ -13,14 +14,19 @@ const FeeAnalytics: React.FC<FeeAnalyticsProps> = ({ onBack }) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [children, setChildren] = useState<Child[]>([]);
   const [allPayments, setAllPayments] = useState<FeePayment[]>([]);
+  const [feeConfigs, setFeeConfigs] = useState<FeeConfig[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const childrenData = await getAllChildren();
+        const [childrenData, cfgs] = await Promise.all([
+          getAllChildren(),
+          getAllFeeConfigs(),
+        ]);
         setChildren(childrenData);
+        setFeeConfigs(cfgs);
 
         // Fetch payments for all children
         const paymentPromises = childrenData.map(child => getFeePaymentsByChild(child.id));
@@ -35,26 +41,46 @@ const FeeAnalytics: React.FC<FeeAnalyticsProps> = ({ onBack }) => {
     loadData();
   }, []);
 
-  const MONTHLY_FEE = 3500;
+  // Resolve monthly fee for a given class from fee_config; fall back to 3500 if not configured.
+  const monthlyFeeForClass = (classId: string): number => {
+    const cfg = feeConfigs.find(c => c.id === classId || c.classId === classId);
+    return cfg?.monthlyFee || 3500;
+  };
+
   const totalStudents = children.length;
-  const expectedMonthlyRevenue = totalStudents * MONTHLY_FEE;
+  const expectedMonthlyRevenue = children.reduce(
+    (sum, c) => sum + monthlyFeeForClass(c.classId),
+    0
+  );
 
-  // Get payments for selected month
-  const currentMonthPayments = allPayments.filter(payment => {
-    const paymentDate = new Date(payment.dueDate);
-    return paymentDate.getMonth() === selectedMonth &&
-           paymentDate.getFullYear() === selectedYear;
-  });
+  // Match a payment to the selected month. Prefer the explicit month/year fields;
+  // fall back to parsing dueDate for legacy records.
+  const isInSelectedMonth = (p: FeePayment) => {
+    if (typeof p.month === 'number' && typeof p.year === 'number') {
+      return p.month === selectedMonth && p.year === selectedYear;
+    }
+    if (!p.dueDate) return false;
+    const d = new Date(p.dueDate);
+    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+  };
 
-  const paidStudents = currentMonthPayments.filter(p => p.status === 'paid').length;
-  const pendingStudents = currentMonthPayments.filter(p => p.status === 'pending').length;
-  const overdueStudents = currentMonthPayments.filter(p => p.status === 'overdue').length;
+  // MONTHLY records for the selected month only (used for the per-student grid and the collection-rate KPI)
+  const currentMonthlyPayments = allPayments.filter(p =>
+    isInSelectedMonth(p) && (p.category || 'monthly') === 'monthly'
+  );
 
-  const totalCollected = currentMonthPayments
+  // ALL fees with a dueDate in the selected month (monthly + admission + annual + misc) — used for total $$ collected
+  const currentAllPayments = allPayments.filter(isInSelectedMonth);
+
+  const paidStudents = currentMonthlyPayments.filter(p => p.status === 'paid').length;
+  const pendingStudents = currentMonthlyPayments.filter(p => p.status === 'pending').length;
+  const overdueStudents = currentMonthlyPayments.filter(p => p.status === 'overdue').length;
+
+  const totalCollected = currentAllPayments
     .filter(p => p.status === 'paid')
     .reduce((sum, p) => sum + p.amount, 0);
 
-  const totalPending = currentMonthPayments
+  const totalPending = currentAllPayments
     .filter(p => p.status === 'pending' || p.status === 'overdue')
     .reduce((sum, p) => sum + p.amount, 0);
 
@@ -62,18 +88,28 @@ const FeeAnalytics: React.FC<FeeAnalyticsProps> = ({ onBack }) => {
     ? Math.round((paidStudents / totalStudents) * 100)
     : 0;
 
+  // Breakdown of collected $$ by category for the selected month
+  const collectedByCategory = currentAllPayments
+    .filter(p => p.status === 'paid')
+    .reduce((acc, p) => {
+      const cat = p.category || 'monthly';
+      acc[cat] = (acc[cat] || 0) + p.amount;
+      return acc;
+    }, {} as Record<string, number>);
+
   const studentFeeStatus = children.map(child => {
-    const childPayments = currentMonthPayments.filter(p => p.childId === child.id);
-    const latestPayment = childPayments[0];
+    const childMonthly = currentMonthlyPayments.filter(p => p.childId === child.id);
+    const latestPayment = childMonthly[0];
 
     return {
       childId: child.id,
       childName: child.name,
       gender: child.gender,
-      amount: MONTHLY_FEE,
+      amount: latestPayment?.amount ?? monthlyFeeForClass(child.classId),
       status: latestPayment?.status || 'pending',
       paidDate: latestPayment?.paidDate,
       dueDate: latestPayment?.dueDate || `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-10`,
+      receiptNumber: latestPayment?.receiptNumber,
     };
   });
 
@@ -138,7 +174,7 @@ const FeeAnalytics: React.FC<FeeAnalyticsProps> = ({ onBack }) => {
           <div className="summary-content">
             <div className="summary-label">Expected Revenue</div>
             <div className="summary-value">₹{expectedMonthlyRevenue.toLocaleString()}</div>
-            <div className="summary-detail">{totalStudents} students × ₹{MONTHLY_FEE}</div>
+            <div className="summary-detail">{totalStudents} students (per-class fee)</div>
           </div>
         </div>
 
@@ -196,26 +232,51 @@ const FeeAnalytics: React.FC<FeeAnalyticsProps> = ({ onBack }) => {
 
       {/* Status Breakdown */}
       <div className="status-breakdown">
-        <h3>Payment Status Breakdown</h3>
+        <h3>Payment Status Breakdown (monthly fees)</h3>
         <div className="status-cards">
           <div className="status-card paid-card">
             <div className="status-count">{paidStudents}</div>
             <div className="status-label">Paid</div>
-            <div className="status-amount">₹{totalCollected.toLocaleString()}</div>
+            <div className="status-amount">
+              ₹{currentMonthlyPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+            </div>
           </div>
           <div className="status-card pending-card">
             <div className="status-count">{pendingStudents}</div>
             <div className="status-label">Pending</div>
             <div className="status-amount">
-              ₹{currentMonthPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+              ₹{currentMonthlyPayments.filter(p => p.status === 'pending').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
             </div>
           </div>
           <div className="status-card overdue-card">
             <div className="status-count">{overdueStudents}</div>
             <div className="status-label">Overdue</div>
             <div className="status-amount">
-              ₹{currentMonthPayments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+              ₹{currentMonthlyPayments.filter(p => p.status === 'overdue').reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Breakdown — what was collected by fee type */}
+      <div className="status-breakdown">
+        <h3>Collected by Category</h3>
+        <div className="status-cards">
+          <div className="status-card paid-card">
+            <div className="status-label">Monthly</div>
+            <div className="status-amount">₹{(collectedByCategory.monthly || 0).toLocaleString()}</div>
+          </div>
+          <div className="status-card pending-card" style={{ background: '#e3f2fd' }}>
+            <div className="status-label">Admission</div>
+            <div className="status-amount">₹{(collectedByCategory.admission || 0).toLocaleString()}</div>
+          </div>
+          <div className="status-card pending-card" style={{ background: '#f3e5f5' }}>
+            <div className="status-label">Annual</div>
+            <div className="status-amount">₹{(collectedByCategory.annual || 0).toLocaleString()}</div>
+          </div>
+          <div className="status-card pending-card" style={{ background: '#fff8e1' }}>
+            <div className="status-label">Misc</div>
+            <div className="status-amount">₹{(collectedByCategory.misc || 0).toLocaleString()}</div>
           </div>
         </div>
       </div>

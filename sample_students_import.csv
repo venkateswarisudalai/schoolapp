@@ -1,6 +1,6 @@
-Student Name,Student Username,Student Password,Parent Name,Parent Email,Parent Phone,Parent Password,Class,Date of Birth,Gender,Address,Emergency Contact,Medical Info,Admission Date
-Aarav Kumar,aarav01,Student@123,Priya Kumar,priya.kumar@example.com,+91 9876543210,Parent@123,nursery,2021-03-15,male,123 Main Street Mumbai Maharashtra,+91 9876543211,No known allergies,2024-01-01
-Ananya Singh,ananya01,Student@123,Neha Singh,neha.singh@example.com,+91 9876543220,Parent@123,lkg,2020-08-22,female,456 Park Avenue Mumbai Maharashtra,+91 9876543221,Allergic to peanuts,2023-06-15
-Rohan Patel,rohan01,Student@123,Amit Patel,amit.patel@example.com,+91 9876543230,Parent@123,ukg,2019-05-10,male,789 Lake View Mumbai Maharashtra,+91 9876543231,,2022-04-01
-Diya Sharma,diya01,Student@123,Sunita Sharma,sunita.sharma@example.com,+91 9876543240,Parent@123,nursery,2021-07-20,female,321 Garden Road Mumbai Maharashtra,+91 9876543241,No allergies,2024-01-15
-Arjun Mehta,arjun01,Student@123,Raj Mehta,raj.mehta@example.com,+91 9876543250,Parent@123,lkg,2020-11-05,male,654 Beach Side Mumbai Maharashtra,+91 9876543251,Asthma - uses inhaler,2023-08-01
+Student Name,Student Username (leave blank),Student Password (leave blank),Parent Name,Parent Email,Parent Phone,Parent Password,Class (prekg/lkg/ukg),Date of Birth (YYYY-MM-DD),Gender (male/female),Address,Emergency Contact,Medical Info (optional),Admission Date (YYYY-MM-DD)
+Aarav Kumar,,,Priya Kumar,priya.kumar@gmail.com,+91 9876543210,Parent@123,prekg,2022-03-15,male,"123 Main Street, Bangalore",+91 9876543211,No known allergies,2026-06-01
+Ananya Singh,,,Neha Singh,neha.singh@gmail.com,+91 9876543220,Parent@123,lkg,2021-08-22,female,"456 Park Avenue, Bangalore",+91 9876543221,Allergic to peanuts,2026-06-01
+Rohan Patel,,,Amit Patel,amit.patel@gmail.com,+91 9876543230,Parent@123,ukg,2020-05-10,male,"789 Lake View, Bangalore",+91 9876543231,,2026-06-01
+Diya Sharma,,,Sunita Sharma,sunita.sharma@gmail.com,+91 9876543240,Parent@123,prekg,2022-07-20,female,"321 Garden Road, Bangalore",+91 9876543241,No allergies,2026-06-01
+Arjun Mehta,,,Raj Mehta,raj.mehta@gmail.com,+91 9876543250,Parent@123,lkg,2021-11-05,male,"654 Beach Side, Bangalore",+91 9876543251,Asthma - uses inhaler,2026-06-01

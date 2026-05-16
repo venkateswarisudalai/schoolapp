@@ -6,6 +6,7 @@ import './StudentsPage.css';
 
 interface Student {
   id: string;
+  admissionNumber?: string;
   name: string;
   parentId: string;
   studentUserId: string;
@@ -243,6 +244,11 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
                     </div>
                     <div className="student-info">
                       <h3>{student.name}</h3>
+                      {student.admissionNumber && (
+                        <div style={{ fontSize: '12px', color: '#1565c0', fontWeight: 600, letterSpacing: '0.5px', marginBottom: '4px' }}>
+                          {student.admissionNumber}
+                        </div>
+                      )}
                       <div className="student-meta">
                         <span className={`class-badge ${student.classId}`}>
                           {getClassName(student.classId)}
