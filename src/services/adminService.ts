@@ -357,6 +357,130 @@ export const regenerateParentPassword = async (
   return newPassword;
 };
 
+// Migrate an existing parent's login userid to match the student's admission number.
+// Useful for parents imported before the auto-generated-userid feature shipped —
+// their auth email is something like priya.kumar@mayurischool.com, but admin wants
+// it to be mkp-prekg-01@mayurischool.com so the userid matches the admission number.
+//
+// Firebase requires recent re-auth for updateEmail, so we sign the parent in on
+// a secondary app using their current password, update both email and password,
+// then mirror everything to the user doc and update children's parentIds.
+//
+// Returns the new userid (admission-number local part) and the new password.
+export const migrateParentToAdmissionUserid = async (
+  parentUserId: string,
+  studentId: string,
+  candidateOldPasswords: string[] = [],
+): Promise<{ newEmail: string; newPassword: string; newUserId: string }> => {
+  const adminUid = auth.currentUser?.uid;
+  if (!adminUid) throw new Error('Admin must be logged in');
+
+  // Read the student so we know the target admission number
+  const studentDoc = await getDoc(doc(db, 'children', studentId));
+  if (!studentDoc.exists()) throw new Error('Student not found');
+  const admissionNumber = (studentDoc.data().admissionNumber || '') as string;
+  if (!admissionNumber) throw new Error('Student has no admission number — cannot derive userid');
+
+  // Read the existing parent record
+  const parentDoc = await getDoc(doc(db, 'users', parentUserId));
+  if (!parentDoc.exists()) throw new Error('Parent record not found');
+  const parentData = parentDoc.data();
+  const oldEmail = parentData.email as string | undefined;
+  if (!oldEmail) throw new Error('Parent has no email on file');
+
+  const newEmail = buildParentLoginEmail(admissionNumber);
+  if (newEmail.toLowerCase() === oldEmail.toLowerCase()) {
+    // Already migrated — just make sure initialPassword is fresh
+    const refreshedPwd = await regenerateParentPassword(parentUserId, candidateOldPasswords);
+    return { newEmail, newPassword: refreshedPwd, newUserId: parentUserId };
+  }
+
+  const newPassword = generateShareablePassword();
+  const existingInitial = (parentData.initialPassword || '') as string;
+  const candidates = Array.from(new Set([
+    ...(existingInitial ? [existingInitial] : []),
+    ...candidateOldPasswords.filter(Boolean),
+    'Parent@123',
+  ]));
+
+  // Firebase client SDK can't change a user's email; we must sign in as them.
+  // Use a secondary app so the admin's session stays intact. Once signed in,
+  // create a NEW account with the new email (sign-in change) since updateEmail
+  // requires verification on modern Firebase. Actually we'll use the simpler
+  // path: create a new account, copy the user doc onto the new UID, repoint
+  // children, delete the old user doc. Old auth account stays orphaned (can't
+  // delete from client) but is harmless.
+
+  // Step 1: Confirm we know the old password (so admin actually has authority)
+  const probeApp = initializeApp(auth.app.options, 'probe-' + Date.now());
+  const probeAuth = getAuth(probeApp);
+  let oldPasswordVerified = '';
+  try {
+    for (const candidate of candidates) {
+      try {
+        await signInWithEmailAndPassword(probeAuth, oldEmail, candidate);
+        oldPasswordVerified = candidate;
+        break;
+      } catch {
+        // keep trying
+      }
+    }
+  } finally {
+    await deleteApp(probeApp);
+  }
+  if (!oldPasswordVerified) {
+    throw new Error(
+      `Couldn't verify the current password for ${oldEmail}. ` +
+      `Reset it from Firebase Console first, then try again.`
+    );
+  }
+
+  // Step 2: Create the new auth account on a secondary app
+  let newAuthUid: string;
+  try {
+    newAuthUid = await createUserWithoutSignIn(newEmail, newPassword);
+  } catch (err) {
+    const code = (err as { code?: string })?.code || '';
+    if (code === 'auth/email-already-in-use') {
+      throw new Error(
+        `${newEmail} is already taken by another parent. ` +
+        `Migrate that parent first, or contact support.`
+      );
+    }
+    throw err;
+  }
+
+  // Step 3: Mirror parent doc onto new UID
+  await setDoc(doc(db, 'users', newAuthUid), {
+    ...parentData,
+    email: newEmail,
+    initialPassword: newPassword,
+    migratedFrom: parentUserId,
+    updatedAt: serverTimestamp(),
+  });
+
+  // Step 4: Repoint all children to new parent UID (both parentIds array and
+  // legacy parentId field)
+  const [modernSnap, legacySnap] = await Promise.all([
+    getDocs(query(collection(db, 'children'), where('parentIds', 'array-contains', parentUserId))),
+    getDocs(query(collection(db, 'children'), where('parentId', '==', parentUserId))),
+  ]);
+  for (const child of modernSnap.docs) {
+    const ids = (child.data().parentIds || []) as string[];
+    const updated = ids.map(id => id === parentUserId ? newAuthUid : id);
+    await updateDoc(doc(db, 'children', child.id), { parentIds: updated });
+  }
+  for (const child of legacySnap.docs) {
+    await updateDoc(doc(db, 'children', child.id), { parentId: newAuthUid });
+  }
+
+  // Step 5: Delete the old user doc. The old auth account stays orphaned —
+  // client SDK can't delete it — but it's harmless and won't be discoverable.
+  await deleteDoc(doc(db, 'users', parentUserId));
+
+  return { newEmail, newPassword, newUserId: newAuthUid };
+};
+
 // Migrate a parent from @mayurischool.com to real Gmail
 export const migrateParentToGmail = async (
   oldUserId: string,

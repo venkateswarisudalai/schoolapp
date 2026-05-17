@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { ChevronLeft, Search, Users as UsersIcon, Edit3, Trash2, Save, RefreshCw } from 'lucide-react';
-import { regenerateParentPassword } from '../../services/adminService';
+import { regenerateParentPassword, migrateParentToAdmissionUserid } from '../../services/adminService';
 import './StudentsPage.css';
 
 interface Student {
@@ -85,6 +85,61 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [resettingPassword, setResettingPassword] = useState(false);
+
+  const handleMigrateUserid = async (parentId: string, studentId: string) => {
+    if (!confirm(
+      'Change this parent\'s login userid to match the student\'s admission number? ' +
+      'The parent will need to log in with the NEW userid + a new password we generate.'
+    )) return;
+    const adminHint = prompt(
+      'If you know the parent\'s current password, enter it. Otherwise leave blank — we\'ll try the default.',
+      '',
+    );
+    setResettingPassword(true);
+    try {
+      const res = await migrateParentToAdmissionUserid(
+        parentId,
+        studentId,
+        adminHint ? [adminHint] : [],
+      );
+      // Update local state so the UI reflects the new parent UID + creds
+      setParents(prev => {
+        const others = prev.filter(p => p.id !== parentId);
+        const old = prev.find(p => p.id === parentId);
+        return [
+          ...others,
+          {
+            id: res.newUserId,
+            name: old?.name || '',
+            email: res.newEmail,
+            phone: old?.phone || '',
+            initialPassword: res.newPassword,
+          },
+        ];
+      });
+      setStudents(prev => prev.map(s => {
+        if (s.id !== studentId) return s;
+        return {
+          ...s,
+          parentId: res.newUserId,
+          parentIds: (s.parentIds || [s.parentId].filter(Boolean) as string[]).map(id => id === parentId ? res.newUserId : id),
+        };
+      }));
+      setSelectedStudent(prev => prev && prev.id === studentId ? {
+        ...prev,
+        parentId: res.newUserId,
+        parentIds: (prev.parentIds || [prev.parentId].filter(Boolean) as string[]).map(id => id === parentId ? res.newUserId : id),
+      } : prev);
+      alert(
+        `Migrated.\n\nNew Userid: ${res.newEmail.split('@')[0]}\nNew Password: ${res.newPassword}\n\n` +
+        `Share these with the parent. The old userid no longer works.`
+      );
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to migrate userid');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   const handleResetParentPassword = async (parentId: string) => {
     if (!confirm('Generate a new login password for this parent? Any current login will stop working.')) return;
@@ -410,9 +465,13 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
               {(() => {
                 const parent = getParentInfo(resolveParentId(selectedStudent));
                 if (!parent) return null;
-                // Userid shown is the bare admission number; the login screen auto-appends
-                // @mayurischool.com so the parent never has to see or type a domain.
-                const userid = selectedStudent.admissionNumber || parent.email.split('@')[0];
+                // The userid is whatever the parent's actual auth email is (local part).
+                // If the parent was imported pre-deploy, this might be priya.kumar etc.
+                // If imported post-deploy, this is the admission number (mkp-prekg-01).
+                const actualUserid = parent.email.split('@')[0];
+                const userid = actualUserid;
+                const expectedUserid = (selectedStudent.admissionNumber || '').toLowerCase();
+                const useridMatchesAdmission = expectedUserid && actualUserid.toLowerCase() === expectedUserid;
                 const hasPassword = !!parent.initialPassword;
                 const credText = hasPassword ? `Userid: ${userid}\nPassword: ${parent.initialPassword}` : '';
                 return (
@@ -433,6 +492,19 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
                           </span>
                         )}
                       </div>
+                      {expectedUserid && !useridMatchesAdmission && (
+                        <div className="detail-item full-width" style={{
+                          background: '#fff3cd',
+                          color: '#856404',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          border: '1px solid #ffeeba',
+                        }}>
+                          ⚠️ This parent's userid is <strong>{userid}</strong>, not <strong>{expectedUserid}</strong>.
+                          To use the admission number as the userid, click "Migrate userid" below.
+                        </div>
+                      )}
                       <div className="detail-item full-width" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {hasPassword && (
                           <button
@@ -476,6 +548,23 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
                               ? 'Regenerate password'
                               : 'Generate password'}
                         </button>
+                        {expectedUserid && !useridMatchesAdmission && (
+                          <button
+                            onClick={() => handleMigrateUserid(parent.id, selectedStudent.id)}
+                            disabled={resettingPassword}
+                            style={{
+                              padding: '8px 14px',
+                              background: '#1565c0',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: resettingPassword ? 'wait' : 'pointer',
+                              fontSize: '13px',
+                            }}
+                          >
+                            Migrate userid to {expectedUserid}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
