@@ -58,13 +58,17 @@ export const bulkSaveAttendance = async (attendanceList: Omit<Attendance, 'id'>[
       if (existing.empty) {
         await saveAttendance(attendance);
       } else {
-        // Update existing record
+        // Update existing record. Firestore rejects undefined values, so only
+        // include checkInTime when we actually have one (present/late).
         const docRef = doc(db, COLLECTION_NAME, existing.docs[0].id);
-        await updateDoc(docRef, {
+        const updates: Record<string, unknown> = {
           status: attendance.status,
-          checkInTime: attendance.checkInTime,
           markedBy: attendance.markedBy,
-        });
+        };
+        if (attendance.checkInTime) {
+          updates.checkInTime = attendance.checkInTime;
+        }
+        await updateDoc(docRef, updates);
       }
     }
   } catch (error) {

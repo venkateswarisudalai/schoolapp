@@ -1921,6 +1921,16 @@ body {
   margin-bottom: 20px;
 }
 
+/* Constrain the CTA so it stays a normal-sized button instead of stretching
+   to fill the flex container's remaining space on wide viewports. */
+.empty-messages .btn {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 180px;
+  max-width: 240px;
+  align-self: center;
+}
+
 /* Conversation List */
 .conversation-list {
   flex: 1;

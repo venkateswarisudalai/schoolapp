@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { adminCreateStudent, type CreateStudentData } from '../../services/adminService';
+import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, type CreateStudentData } from '../../services/adminService';
+import { getClassCode } from '../../data/classes';
 import { ChevronLeft, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import './ImportStudents.css';
 
@@ -13,6 +14,9 @@ type StudentRow = CreateStudentData;
 interface ImportResult {
   success: boolean;
   studentName: string;
+  admissionNumber?: string;
+  loginEmail?: string;
+  loginPassword?: string;
   error?: string;
 }
 
@@ -179,6 +183,13 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
     setImporting(true);
     const importResults: ImportResult[] = [];
 
+    // Pre-compute admission numbers in one read per class — avoids the Firestore
+    // read-after-write cache race where back-to-back imports in the same class
+    // would all see the same maxRoll and collide on mkp-{code}-01.
+    const classIds = students.map(s => s.classId);
+    const maxRolls = await getMaxRollNumbers(classIds);
+    const nextRoll: Record<string, number> = { ...maxRolls };
+
     for (const student of students) {
       try {
         if (!student.studentName || !student.parentName || !student.parentPhone) {
@@ -189,9 +200,21 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
           });
           continue;
         }
-        await adminCreateStudent(student);
-        importResults.push({ success: true, studentName: student.studentName });
+        nextRoll[student.classId] = (nextRoll[student.classId] || 0) + 1;
+        const admissionNumber = formatAdmissionNumber(getClassCode(student.classId), nextRoll[student.classId]);
+        const res = await adminCreateStudent({ ...student, admissionNumber, autoGenerateCredentials: true });
+        importResults.push({
+          success: true,
+          studentName: student.studentName,
+          admissionNumber,
+          // Show the bare admission number as the userid — parents type it as-is
+          // and the login screen auto-appends @mayurischool.com.
+          loginEmail: admissionNumber,
+          loginPassword: res.parentPassword,
+        });
       } catch (error) {
+        // Roll back the counter so the next student in this class doesn't skip a number
+        nextRoll[student.classId] = (nextRoll[student.classId] || 1) - 1;
         importResults.push({
           success: false,
           studentName: student.studentName,
@@ -264,14 +287,48 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
         </div>
 
         <div className="import-results">
-          <h3>Detailed Results</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <h3 style={{ margin: 0 }}>Detailed Results</h3>
+            {successCount > 0 && (
+              <button
+                className="btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '13px', cursor: 'pointer' }}
+                onClick={() => {
+                  const rows = [
+                    ['Student', 'Userid (Admission #)', 'Password'],
+                    ...results
+                      .filter(r => r.success && r.loginEmail)
+                      .map(r => [r.studentName, r.loginEmail || '', r.loginPassword || '']),
+                  ];
+                  const text = rows.map(r => r.join('\t')).join('\n');
+                  navigator.clipboard.writeText(text);
+                  alert('Credentials copied. Paste into Sheets/Excel to share with parents.');
+                }}
+              >
+                Copy all credentials
+              </button>
+            )}
+          </div>
           {results.map((result, index) => (
             <div key={index} className={`result-item ${result.success ? 'success' : 'error'}`}>
               <div className="result-icon">
                 {result.success ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
               </div>
-              <div className="result-info">
-                <strong>{result.studentName}</strong>
+              <div className="result-info" style={{ flex: 1 }}>
+                <div>
+                  <strong>{result.studentName}</strong>
+                  {result.admissionNumber && (
+                    <span style={{ marginLeft: '8px', color: '#1565c0', fontWeight: 600, letterSpacing: '0.5px' }}>
+                      {result.admissionNumber}
+                    </span>
+                  )}
+                </div>
+                {result.success && result.loginEmail && (
+                  <div style={{ marginTop: '6px', fontSize: '13px', color: '#444', fontFamily: 'monospace' }}>
+                    <div>Userid: <span style={{ color: '#1565c0' }}>{result.loginEmail}</span></div>
+                    <div>Password: <span style={{ color: '#c62828' }}>{result.loginPassword}</span></div>
+                  </div>
+                )}
                 {result.error && <span className="error-text">{result.error}</span>}
               </div>
             </div>

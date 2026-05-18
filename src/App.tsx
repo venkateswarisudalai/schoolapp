@@ -115,7 +115,7 @@ const LoginScreen = () => {
             <User size={20} className="input-icon" />
             <input
               type="text"
-              placeholder="Username or Email"
+              placeholder="Userid (e.g. mkp-lkg-01) or Email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -123,7 +123,7 @@ const LoginScreen = () => {
             />
           </div>
           <small style={{ display: 'block', marginTop: '-8px', marginBottom: '12px', color: '#888', fontSize: '12px' }}>
-            Enter your Gmail or username
+            Parents: use the userid the school gave you (e.g. mkp-lkg-01)
           </small>
           <div className="input-with-icon">
             <Lock size={20} className="input-icon" />
@@ -813,7 +813,43 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
         </div>
       ) : (
         <div className="attendance-list">
-          {children.map((child) => (
+          {(() => {
+            // Sort children by class order (Pre-KG → LKG → UKG), then by admission
+            // number / name within each class, so the roster lines up with the
+            // teacher's physical class lists.
+            const classOrder: Record<string, number> = { 'class-1': 1, 'class-2': 2, 'class-3': 3 };
+            const sorted = [...children].sort((a, b) => {
+              const ca = classOrder[a.classId] ?? 99;
+              const cb = classOrder[b.classId] ?? 99;
+              if (ca !== cb) return ca - cb;
+              const aa = a.admissionNumber || '';
+              const ab = b.admissionNumber || '';
+              if (aa && ab) return aa.localeCompare(ab, undefined, { numeric: true });
+              return a.name.localeCompare(b.name);
+            });
+            const rendered: React.ReactNode[] = [];
+            let lastClassId: string | null = null;
+            sorted.forEach(child => {
+              if (child.classId !== lastClassId) {
+                lastClassId = child.classId;
+                rendered.push(
+                  <div
+                    key={`hdr-${child.classId}`}
+                    style={{
+                      padding: '10px 16px',
+                      background: '#f5f5f5',
+                      color: '#555',
+                      fontWeight: 600,
+                      fontSize: '13px',
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {mockClasses.find(c => c.id === child.classId)?.name || child.classId}
+                  </div>
+                );
+              }
+              rendered.push(
           <div className="attendance-item" key={child.id}>
             <div className="attendance-avatar">
               {child.gender === 'male' ? '👦' : '👧'}
@@ -874,7 +910,10 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
               </div>
             )}
           </div>
-        ))}
+              );
+            });
+            return rendered;
+          })()}
         </div>
       )}
 

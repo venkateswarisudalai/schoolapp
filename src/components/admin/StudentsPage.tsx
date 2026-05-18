@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { ChevronLeft, Search, Users as UsersIcon, Edit3, Trash2, Save } from 'lucide-react';
+import { ChevronLeft, Search, Users as UsersIcon, Edit3, Trash2, Save, RefreshCw, Calendar } from 'lucide-react';
+import { regenerateParentPassword, migrateParentToAdmissionUserid } from '../../services/adminService';
+import StudentAttendanceView from './StudentAttendanceView';
 import './StudentsPage.css';
 
 interface Student {
   id: string;
   admissionNumber?: string;
   name: string;
-  parentId: string;
+  parentId?: string;
+  parentIds?: string[];
   studentUserId: string;
   classId: string;
   dateOfBirth: string;
@@ -19,11 +22,17 @@ interface Student {
   admissionDate: string;
 }
 
+// Imported students store parentIds (array); legacy students used parentId (string).
+const resolveParentId = (student: Pick<Student, 'parentId' | 'parentIds'>): string | undefined => {
+  return student.parentId || student.parentIds?.[0];
+};
+
 interface Parent {
   id: string;
   name: string;
   email: string;
   phone: string;
+  initialPassword?: string;
 }
 
 interface StudentsPageProps {
@@ -61,7 +70,8 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
           id: doc.id,
           name: doc.data().name,
           email: doc.data().email,
-          phone: doc.data().phone
+          phone: doc.data().phone,
+          initialPassword: doc.data().initialPassword,
         } as Parent));
 
       setStudents(studentsData);
@@ -75,6 +85,81 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
 
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [attendanceForStudent, setAttendanceForStudent] = useState<Student | null>(null);
+
+  const handleMigrateUserid = async (parentId: string, studentId: string) => {
+    if (!confirm(
+      'Change this parent\'s login userid to match the student\'s admission number? ' +
+      'The parent will need to log in with the NEW userid + a new password we generate.'
+    )) return;
+    const adminHint = prompt(
+      'If you know the parent\'s current password, enter it. Otherwise leave blank — we\'ll try the default.',
+      '',
+    );
+    setResettingPassword(true);
+    try {
+      const res = await migrateParentToAdmissionUserid(
+        parentId,
+        studentId,
+        adminHint ? [adminHint] : [],
+      );
+      // Update local state so the UI reflects the new parent UID + creds
+      setParents(prev => {
+        const others = prev.filter(p => p.id !== parentId);
+        const old = prev.find(p => p.id === parentId);
+        return [
+          ...others,
+          {
+            id: res.newUserId,
+            name: old?.name || '',
+            email: res.newEmail,
+            phone: old?.phone || '',
+            initialPassword: res.newPassword,
+          },
+        ];
+      });
+      setStudents(prev => prev.map(s => {
+        if (s.id !== studentId) return s;
+        return {
+          ...s,
+          parentId: res.newUserId,
+          parentIds: (s.parentIds || [s.parentId].filter(Boolean) as string[]).map(id => id === parentId ? res.newUserId : id),
+        };
+      }));
+      setSelectedStudent(prev => prev && prev.id === studentId ? {
+        ...prev,
+        parentId: res.newUserId,
+        parentIds: (prev.parentIds || [prev.parentId].filter(Boolean) as string[]).map(id => id === parentId ? res.newUserId : id),
+      } : prev);
+      alert(
+        `Migrated.\n\nNew Userid: ${res.newEmail.split('@')[0]}\nNew Password: ${res.newPassword}\n\n` +
+        `Share these with the parent. The old userid no longer works.`
+      );
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to migrate userid');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
+  const handleResetParentPassword = async (parentId: string) => {
+    if (!confirm('Generate a new login password for this parent? Any current login will stop working.')) return;
+    const adminHint = prompt(
+      'Optional: if you know the parent\'s current password, enter it (improves success rate). Otherwise leave blank — we\'ll try the default.',
+      '',
+    );
+    setResettingPassword(true);
+    try {
+      const newPwd = await regenerateParentPassword(parentId, adminHint ? [adminHint] : []);
+      setParents(prev => prev.map(p => p.id === parentId ? { ...p, initialPassword: newPwd } : p));
+      alert(`New password: ${newPwd}\n\nCopy this and share with the parent. It's now saved on the student detail page.`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to reset password');
+    } finally {
+      setResettingPassword(false);
+    }
+  };
 
   const getClassName = (classId: string) => {
     const classNames: Record<string, string> = {
@@ -100,7 +185,30 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
   const handleDelete = async (studentId: string) => {
     if (!confirm('Are you sure you want to remove this student? This cannot be undone.')) return;
     try {
+      // Capture the parent ID(s) before deleting so we can clean up orphan parent
+      // user docs (auth account can't be removed from the client SDK, but removing
+      // the user doc lets a fresh import recreate the parent record cleanly).
+      const studentDoc = students.find(s => s.id === studentId);
+      const parentIdsToCheck: string[] = [];
+      if (studentDoc?.parentId) parentIdsToCheck.push(studentDoc.parentId);
+      const rawParentIds = (studentDoc as unknown as { parentIds?: string[] })?.parentIds;
+      if (Array.isArray(rawParentIds)) parentIdsToCheck.push(...rawParentIds);
+
       await deleteDoc(doc(db, 'children', studentId));
+
+      // For each parent, check if they have any other children left. If not,
+      // delete the parent user doc so a re-import with the same email succeeds.
+      for (const parentId of [...new Set(parentIdsToCheck)]) {
+        if (!parentId) continue;
+        const [legacy, modern] = await Promise.all([
+          getDocs(query(collection(db, 'children'), where('parentId', '==', parentId))),
+          getDocs(query(collection(db, 'children'), where('parentIds', 'array-contains', parentId))),
+        ]);
+        if (legacy.empty && modern.empty) {
+          await deleteDoc(doc(db, 'users', parentId));
+        }
+      }
+
       setStudents(prev => prev.filter(s => s.id !== studentId));
       setSelectedStudent(null);
     } catch (error) {
@@ -109,7 +217,8 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
     }
   };
 
-  const getParentInfo = (parentId: string) => {
+  const getParentInfo = (parentId: string | undefined) => {
+    if (!parentId) return undefined;
     return parents.find(p => p.id === parentId);
   };
 
@@ -152,6 +261,17 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
           <p>Loading students...</p>
         </div>
       </div>
+    );
+  }
+
+  if (attendanceForStudent) {
+    return (
+      <StudentAttendanceView
+        childId={attendanceForStudent.id}
+        childName={attendanceForStudent.name}
+        admissionNumber={attendanceForStudent.admissionNumber}
+        onBack={() => setAttendanceForStudent(null)}
+      />
     );
   }
 
@@ -229,7 +349,7 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
               {selectedClass !== 'all' && ` in ${getClassName(selectedClass)}`}
             </div>
             {filteredStudents.map((student) => {
-              const parent = getParentInfo(student.parentId);
+              const parent = getParentInfo(resolveParentId(student));
               const age = calculateAge(student.dateOfBirth);
 
               return (
@@ -330,7 +450,7 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
                 <h4>Parent/Guardian Information</h4>
                 <div className="detail-grid">
                   {(() => {
-                    const parent = getParentInfo(selectedStudent.parentId);
+                    const parent = getParentInfo(resolveParentId(selectedStudent));
                     return parent ? (
                       <>
                         <div className="detail-item">
@@ -354,6 +474,115 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
                   })()}
                 </div>
               </div>
+
+              {(() => {
+                const parent = getParentInfo(resolveParentId(selectedStudent));
+                if (!parent) return null;
+                // The userid is whatever the parent's actual auth email is (local part).
+                // If the parent was imported pre-deploy, this might be priya.kumar etc.
+                // If imported post-deploy, this is the admission number (mkp-prekg-01).
+                const actualUserid = parent.email.split('@')[0];
+                const userid = actualUserid;
+                const expectedUserid = (selectedStudent.admissionNumber || '').toLowerCase();
+                const useridMatchesAdmission = expectedUserid && actualUserid.toLowerCase() === expectedUserid;
+                const hasPassword = !!parent.initialPassword;
+                const credText = hasPassword ? `Userid: ${userid}\nPassword: ${parent.initialPassword}` : '';
+                return (
+                  <div className="detail-section">
+                    <h4>Parent Login (shareable)</h4>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <strong>Userid:</strong>
+                        <span style={{ fontFamily: 'monospace', color: '#1565c0' }}>{userid}</span>
+                      </div>
+                      <div className="detail-item">
+                        <strong>Password:</strong>
+                        {hasPassword ? (
+                          <span style={{ fontFamily: 'monospace', color: '#c62828' }}>{parent.initialPassword}</span>
+                        ) : (
+                          <span style={{ color: '#888', fontStyle: 'italic' }}>
+                            Not stored — click "Generate password" below
+                          </span>
+                        )}
+                      </div>
+                      {expectedUserid && !useridMatchesAdmission && (
+                        <div className="detail-item full-width" style={{
+                          background: '#fff3cd',
+                          color: '#856404',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          border: '1px solid #ffeeba',
+                        }}>
+                          ⚠️ This parent's userid is <strong>{userid}</strong>, not <strong>{expectedUserid}</strong>.
+                          To use the admission number as the userid, click "Migrate userid" below.
+                        </div>
+                      )}
+                      <div className="detail-item full-width" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {hasPassword && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(credText);
+                              alert('Parent login copied. Share via WhatsApp / SMS.');
+                            }}
+                            style={{
+                              padding: '8px 14px',
+                              background: '#00897B',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                            }}
+                          >
+                            Copy login to clipboard
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleResetParentPassword(parent.id)}
+                          disabled={resettingPassword}
+                          style={{
+                            padding: '8px 14px',
+                            background: hasPassword ? '#f5f5f5' : '#1565c0',
+                            color: hasPassword ? '#444' : 'white',
+                            border: hasPassword ? '1px solid #ddd' : 'none',
+                            borderRadius: '8px',
+                            cursor: resettingPassword ? 'wait' : 'pointer',
+                            fontSize: '13px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <RefreshCw size={14} />
+                          {resettingPassword
+                            ? 'Working...'
+                            : hasPassword
+                              ? 'Regenerate password'
+                              : 'Generate password'}
+                        </button>
+                        {expectedUserid && !useridMatchesAdmission && (
+                          <button
+                            onClick={() => handleMigrateUserid(parent.id, selectedStudent.id)}
+                            disabled={resettingPassword}
+                            style={{
+                              padding: '8px 14px',
+                              background: '#1565c0',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: resettingPassword ? 'wait' : 'pointer',
+                              fontSize: '13px',
+                            }}
+                          >
+                            Migrate userid to {expectedUserid}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="detail-section">
                 <h4>Contact & Medical Information</h4>
@@ -401,6 +630,12 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
               ) : (
                 <>
                   <button className="btn-secondary" onClick={() => setSelectedStudent(null)} style={{ flex: 1 }}>Close</button>
+                  <button
+                    onClick={() => { setAttendanceForStudent(selectedStudent); setSelectedStudent(null); }}
+                    style={{ flex: 1, padding: '10px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  >
+                    <Calendar size={16} /> Attendance
+                  </button>
                   <button onClick={() => { setEditData({}); setEditing(true); }} style={{ flex: 1, padding: '10px', background: '#00897B', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                     <Edit3 size={16} /> Edit
                   </button>
