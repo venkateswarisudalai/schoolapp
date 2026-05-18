@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { ChevronLeft, Search, Users as UsersIcon, Edit3, Trash2, Save, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Search, Users as UsersIcon, Edit3, Trash2, Save, RefreshCw, Calendar } from 'lucide-react';
 import { regenerateParentPassword, migrateParentToAdmissionUserid } from '../../services/adminService';
+import StudentAttendanceView from './StudentAttendanceView';
 import './StudentsPage.css';
 
 interface Student {
@@ -85,6 +86,7 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [attendanceForStudent, setAttendanceForStudent] = useState<Student | null>(null);
 
   const handleMigrateUserid = async (parentId: string, studentId: string) => {
     if (!confirm(
@@ -259,6 +261,17 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
           <p>Loading students...</p>
         </div>
       </div>
+    );
+  }
+
+  if (attendanceForStudent) {
+    return (
+      <StudentAttendanceView
+        childId={attendanceForStudent.id}
+        childName={attendanceForStudent.name}
+        admissionNumber={attendanceForStudent.admissionNumber}
+        onBack={() => setAttendanceForStudent(null)}
+      />
     );
   }
 
@@ -617,6 +630,12 @@ const StudentsPage = ({ onBack }: StudentsPageProps) => {
               ) : (
                 <>
                   <button className="btn-secondary" onClick={() => setSelectedStudent(null)} style={{ flex: 1 }}>Close</button>
+                  <button
+                    onClick={() => { setAttendanceForStudent(selectedStudent); setSelectedStudent(null); }}
+                    style={{ flex: 1, padding: '10px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                  >
+                    <Calendar size={16} /> Attendance
+                  </button>
                   <button onClick={() => { setEditData({}); setEditing(true); }} style={{ flex: 1, padding: '10px', background: '#00897B', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                     <Edit3 size={16} /> Edit
                   </button>
