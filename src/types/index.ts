@@ -379,3 +379,21 @@ export interface CheckInRecord {
   method: 'qr' | 'manual';
   qrTokenId?: string;
 }
+
+// App feedback — submitted by any user about the app itself.
+export type FeedbackCategory = 'bug' | 'suggestion' | 'praise' | 'other';
+
+export interface AppFeedback {
+  id: string;
+  category: FeedbackCategory;
+  message: string;
+  rating?: number; // 1–5, optional
+  userId?: string;
+  userName?: string;
+  userEmail?: string;
+  userRole?: string;
+  appVersion?: string;
+  userAgent?: string;
+  status: 'new' | 'reviewed';
+  createdAt: string;
+}

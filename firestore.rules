@@ -207,5 +207,12 @@ service cloud.firestore {
       allow update: if isTeacher() || isAdmin();
       allow delete: if isAdmin();
     }
+
+    // App feedback — any approved user can submit; only admins can read/manage.
+    match /app_feedback/{feedbackId} {
+      allow read: if isAdmin();
+      allow create: if isApproved();
+      allow update, delete: if isAdmin();
+    }
   }
 }
