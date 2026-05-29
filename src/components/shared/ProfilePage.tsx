@@ -11,14 +11,17 @@ import {
   Edit3,
   Check,
   X,
+  MessageSquarePlus,
+  ChevronRight,
 } from 'lucide-react';
 import './ProfilePage.css';
 
 interface ProfilePageProps {
   onBack: () => void;
+  onFeedback?: () => void;
 }
 
-const ProfilePage = ({ onBack }: ProfilePageProps) => {
+const ProfilePage = ({ onBack, onFeedback }: ProfilePageProps) => {
   const { user, logout } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -271,6 +274,23 @@ const ProfilePage = ({ onBack }: ProfilePageProps) => {
           </div>
         </div>
       </div>
+
+      {/* Support / Feedback */}
+      {onFeedback && (
+        <div className="profile-section">
+          <h3 className="profile-section-title">Support</h3>
+          <button className="profile-info-row" onClick={onFeedback} style={{ width: '100%', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+            <div className="profile-info-icon" style={{ color: '#00897B' }}>
+              <MessageSquarePlus size={18} />
+            </div>
+            <div className="profile-info-content">
+              <span className="profile-info-label">Send Feedback</span>
+              <span className="profile-info-value">Tell us what you think about the app</span>
+            </div>
+            <ChevronRight size={18} style={{ color: '#bbb' }} />
+          </button>
+        </div>
+      )}
 
       {/* Logout */}
       <button className="profile-logout-btn" onClick={logout}>

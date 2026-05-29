@@ -34,6 +34,7 @@ import QRCodeDisplay from './components/teacher/QRCodeDisplay';
 import QRScanner from './components/parent/QRScanner';
 import DailyReportPage from './components/parent/DailyReport';
 import ProfilePage from './components/shared/ProfilePage';
+import FeedbackPage from './components/shared/FeedbackPage';
 import {
   Home,
   Calendar,
@@ -1357,7 +1358,9 @@ const MainApp = () => {
       case 'child-profile':
         return children[0] ? <ChildProfile onBack={() => setCurrentPage('home')} child={children[0]} /> : <div className="content"><p style={{padding:'40px',textAlign:'center'}}>No student found</p></div>;
       case 'profile':
-        return <ProfilePage onBack={() => setCurrentPage('home')} />;
+        return <ProfilePage onBack={() => setCurrentPage('home')} onFeedback={() => setCurrentPage('feedback')} />;
+      case 'feedback':
+        return <FeedbackPage onBack={() => setCurrentPage('home')} />;
       default:
         if (user.role === 'parent') return <ParentDashboard setCurrentPage={setCurrentPage} children={children} activities={activities} announcements={announcements} />;
         if (user.role === 'teacher') return <TeacherDashboard setCurrentPage={setCurrentPage} />;
