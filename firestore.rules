@@ -194,6 +194,14 @@ service cloud.firestore {
       allow update, delete: if isTeacher() || isAdmin();
     }
 
+    // Staff attendance — teachers create their own check-in/out records by
+    // scanning the entrance QR; admins read/manage the log.
+    match /staff_attendance/{recordId} {
+      allow read: if isApproved();
+      allow create: if isApproved();
+      allow update, delete: if isAdmin();
+    }
+
     // App-wide settings (e.g., QR check-in enabled flag)
     match /app_settings/{docId} {
       allow read: if request.auth != null;

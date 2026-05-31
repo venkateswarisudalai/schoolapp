@@ -32,6 +32,8 @@ import LessonPlanner from './components/teacher/LessonPlanner';
 import FeedPostCreator from './components/teacher/FeedPostCreator';
 import QRCodeDisplay from './components/teacher/QRCodeDisplay';
 import QRScanner from './components/parent/QRScanner';
+import TeacherStaffAttendance from './components/teacher/StaffAttendance';
+import AdminStaffAttendance from './components/admin/StaffAttendance';
 import DailyReportPage from './components/parent/DailyReport';
 import ProfilePage from './components/shared/ProfilePage';
 import FeedbackPage from './components/shared/FeedbackPage';
@@ -463,6 +465,12 @@ const TeacherDashboard = ({ setCurrentPage }: { setCurrentPage: (page: string) =
           </div>
           <span className="quick-action-label">QR Check-in</span>
         </button>
+        <button className="quick-action" onClick={() => setCurrentPage('staff-attendance')}>
+          <div className="quick-action-icon attendance">
+            <UserCheck size={24} />
+          </div>
+          <span className="quick-action-label">My Attendance</span>
+        </button>
         <button className="quick-action" onClick={() => setCurrentPage('class-update')}>
           <div className="quick-action-icon daily-report">
             <FileBarChart size={24} />
@@ -629,6 +637,12 @@ const AdminDashboard = ({ setCurrentPage, children, teachers, announcements: _an
             <QrCode size={24} />
           </div>
           <span className="quick-action-label">QR Check-in</span>
+        </button>
+        <button className="quick-action" onClick={() => setCurrentPage('staff-attendance')}>
+          <div className="quick-action-icon staff">
+            <UserCheck size={24} />
+          </div>
+          <span className="quick-action-label">Staff Attendance</span>
         </button>
         <button className="quick-action" onClick={() => setCurrentPage('concerns')}>
           <div className="quick-action-icon messages">
@@ -1186,8 +1200,12 @@ const LoadingScreen = () => (
 // Main App with Navigation
 const MainApp = () => {
   const { user, loading } = useAuth();
-  // Auto-open check-in page if ?action=checkin in URL (from QR scan)
-  const initialPage = new URLSearchParams(window.location.search).get('action') === 'checkin' ? 'qr-scan' : 'home';
+  // Auto-open the right page based on ?action in the URL (from a scanned QR)
+  const urlAction = new URLSearchParams(window.location.search).get('action');
+  const initialPage =
+    urlAction === 'checkin' ? 'qr-scan'
+    : urlAction === 'teacher-attendance' ? 'staff-attendance'
+    : 'home';
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [activeNav, setActiveNav] = useState(initialPage === 'qr-scan' ? 'home' : 'home');
 
@@ -1347,6 +1365,10 @@ const MainApp = () => {
         return <QRCodeDisplay onBack={() => setCurrentPage('home')} />;
       case 'qr-scan':
         return <QRScanner onBack={() => setCurrentPage('home')} children={children} />;
+      case 'staff-attendance':
+        if (isAdmin) return <AdminStaffAttendance onBack={() => setCurrentPage('home')} />;
+        if (isTeacher) return <TeacherStaffAttendance onBack={() => setCurrentPage('home')} />;
+        setCurrentPage('home'); return null;
       case 'daily-report':
         return <DailyReportPage onBack={() => setCurrentPage('home')} children={children} />;
       case 'class-update':
