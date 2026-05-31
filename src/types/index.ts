@@ -380,6 +380,21 @@ export interface CheckInRecord {
   qrTokenId?: string;
 }
 
+// Staff (teacher) attendance — teacher scans the entrance QR and marks their
+// own check-in / check-out. Times are stored in IST (Asia/Kolkata) so the
+// admin log buckets correctly regardless of the device's timezone.
+export interface StaffAttendanceRecord {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  teacherEmail: string;
+  type: 'check-in' | 'check-out';
+  timestamp: string; // ISO UTC instant — used for ordering
+  istDate: string;   // YYYY-MM-DD in IST — grouping key for the daily log
+  istTime: string;   // e.g. "09:05 AM" in IST — display label
+  method: 'qr' | 'manual';
+}
+
 // App feedback — submitted by any user about the app itself.
 export type FeedbackCategory = 'bug' | 'suggestion' | 'praise' | 'other';
 
