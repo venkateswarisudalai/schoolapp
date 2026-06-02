@@ -712,9 +712,33 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [roster, setRoster] = useState<Child[]>(children);
 
   // Check if user can mark attendance (only teachers and admins)
   const canMarkAttendance = user?.role === 'teacher' || user?.role === 'admin';
+
+  // Keep the roster in sync with the passed-in children. For teachers/admins,
+  // if the prop is empty (App-level children state hasn't loaded yet, or a
+  // teacher has no classes assigned), fetch the full children list directly so
+  // the marking screen is never silently blank.
+  useEffect(() => {
+    setRoster(children);
+    const isStaff = user?.role === 'teacher' || user?.role === 'admin';
+    if (!isStaff || children.length > 0) return;
+
+    let cancelled = false;
+    getAllChildren()
+      .then(all => {
+        if (cancelled) return;
+        const assigned = (user as typeof user & { assignedClasses?: string[] }).assignedClasses;
+        const scoped = user?.role === 'teacher' && assigned && assigned.length > 0
+          ? all.filter(c => assigned.includes(c.classId))
+          : all;
+        setRoster(scoped);
+      })
+      .catch(err => console.error('Error loading attendance roster:', err));
+    return () => { cancelled = true; };
+  }, [children, user]);
 
   // Load existing attendance data for the selected date
   useEffect(() => {
@@ -756,7 +780,7 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
       const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
       // Convert attendance — unmarked children default to ABSENT
-      const attendanceRecords = children.map(child => {
+      const attendanceRecords = roster.map(child => {
         const status = attendance[child.id] || 'absent';
         return {
           childId: child.id,
@@ -833,7 +857,14 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
             // number / name within each class, so the roster lines up with the
             // teacher's physical class lists.
             const classOrder: Record<string, number> = { 'class-1': 1, 'class-2': 2, 'class-3': 3 };
-            const sorted = [...children].sort((a, b) => {
+            if (roster.length === 0) {
+              return (
+                <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+                  No students found.
+                </div>
+              );
+            }
+            const sorted = [...roster].sort((a, b) => {
               const ca = classOrder[a.classId] ?? 99;
               const cb = classOrder[b.classId] ?? 99;
               if (ca !== cb) return ca - cb;
@@ -1244,9 +1275,13 @@ const MainApp = () => {
         } else if (user.role === 'teacher') {
           const allChildren = await getAllChildren();
           const teacherUser = user as typeof user & { assignedClasses?: string[] };
-          childrenData = allChildren.filter(child =>
-            teacherUser.assignedClasses && teacherUser.assignedClasses.includes(child.classId)
-          );
+          const assigned = teacherUser.assignedClasses;
+          // Scope to the teacher's assigned classes — but if no classes are
+          // assigned on their profile, fall back to the full roster so the
+          // attendance list is never silently empty.
+          childrenData = assigned && assigned.length > 0
+            ? allChildren.filter(child => assigned.includes(child.classId))
+            : allChildren;
         } else {
           childrenData = await getAllChildren();
         }
