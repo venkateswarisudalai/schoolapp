@@ -1,23 +1,33 @@
-import { useState } from 'react';
-import { ChevronLeft, Send, Calendar } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ChevronLeft, Send, Calendar, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createClassUpdate } from '../../services/classUpdateService';
+import { getChildrenByClass } from '../../services/childrenService';
+import { CLASSES } from '../../data/classes';
 import './ClassUpdate.css';
 
 interface ClassUpdateProps {
   onBack: () => void;
 }
 
-const classes = [
-  { id: 'class-1', name: 'Sunshine Nursery' },
-  { id: 'class-2', name: 'Rainbow LKG' },
-  { id: 'class-3', name: 'Star UKG' },
-];
-
 const ClassUpdateForm = ({ onBack }: ClassUpdateProps) => {
   const { user } = useAuth();
+
+  // A teacher can only post updates to the class(es) they're assigned to.
+  // Mirror the scoping App.tsx uses elsewhere: filter the canonical class
+  // list to assignedClasses, falling back to every class if none are set so
+  // the form is never silently empty.
+  const myClasses = useMemo(() => {
+    const assigned = (user as typeof user & { assignedClasses?: string[] })?.assignedClasses;
+    if (user?.role === 'teacher' && assigned && assigned.length > 0) {
+      return CLASSES.filter(c => assigned.includes(c.id));
+    }
+    return CLASSES;
+  }, [user]);
+
   const [type, setType] = useState<'daily' | 'weekly'>('daily');
-  const [classId, setClassId] = useState('class-2');
+  const [classId, setClassId] = useState(myClasses[0]?.id ?? 'class-1');
+  const [studentCount, setStudentCount] = useState<number | null>(null);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [weekStart, setWeekStart] = useState('');
   const [weekEnd, setWeekEnd] = useState('');
@@ -28,6 +38,24 @@ const ClassUpdateForm = ({ onBack }: ClassUpdateProps) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Keep the selected class within the teacher's allowed set.
+  useEffect(() => {
+    if (!myClasses.some(c => c.id === classId)) {
+      setClassId(myClasses[0]?.id ?? 'class-1');
+    }
+  }, [myClasses, classId]);
+
+  // Show how many enrolled students (and therefore parents) this update reaches,
+  // so the teacher can see it targets exactly the students added to that class.
+  useEffect(() => {
+    let cancelled = false;
+    setStudentCount(null);
+    getChildrenByClass(classId)
+      .then(children => { if (!cancelled) setStudentCount(children.length); })
+      .catch(() => { if (!cancelled) setStudentCount(null); });
+    return () => { cancelled = true; };
+  }, [classId]);
+
   const handleSubmit = async () => {
     if (!user || !summary.trim()) return;
     if (type === 'weekly' && (!weekStart || !weekEnd)) {
@@ -37,7 +65,7 @@ const ClassUpdateForm = ({ onBack }: ClassUpdateProps) => {
 
     setSaving(true);
     try {
-      const cls = classes.find(c => c.id === classId);
+      const cls = CLASSES.find(c => c.id === classId);
       const payload: Parameters<typeof createClassUpdate>[0] = {
         classId,
         className: cls?.name || '',
@@ -96,12 +124,24 @@ const ClassUpdateForm = ({ onBack }: ClassUpdateProps) => {
           </button>
         </div>
 
-        {/* Class */}
+        {/* Class — scoped to the teacher's assigned class(es) */}
         <div className="cu-field">
           <label>Class</label>
-          <select value={classId} onChange={e => setClassId(e.target.value)} className="cu-select">
-            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          {myClasses.length === 1 ? (
+            <div className="cu-class-locked">{myClasses[0].name}</div>
+          ) : (
+            <select value={classId} onChange={e => setClassId(e.target.value)} className="cu-select">
+              {myClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          )}
+          <div className="cu-recipients">
+            <Users size={13} />
+            {studentCount === null
+              ? 'Checking enrolled students…'
+              : studentCount === 0
+                ? 'No students added to this class yet'
+                : `Reaches ${studentCount} student${studentCount === 1 ? '' : 's'} added to this class`}
+          </div>
         </div>
 
         {/* Date */}
