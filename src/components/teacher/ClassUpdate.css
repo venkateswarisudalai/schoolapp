@@ -20,3 +20,12 @@
 }
 .cu-textarea:focus { outline: none; border-color: #00897B; }
 .cu-row { display: flex; gap: 10px; }
+
+.cu-class-locked {
+  width: 100%; padding: 10px 12px; border: 1px solid #e0e0e0; border-radius: 10px;
+  font-size: 14px; font-weight: 600; color: #00695C; background: #E0F2F1; box-sizing: border-box;
+}
+.cu-recipients {
+  display: flex; align-items: center; gap: 5px;
+  margin-top: 6px; font-size: 12px; color: #00897B;
+}
