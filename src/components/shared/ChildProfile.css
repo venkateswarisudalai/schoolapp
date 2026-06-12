@@ -56,3 +56,16 @@
 .cp-pickup-name { font-weight: 600; font-size: 14px; }
 .cp-pickup-detail { font-size: 12px; color: #888; margin-top: 2px; }
 .cp-pickup-pin { font-size: 12px; color: #00897B; font-weight: 600; margin-top: 4px; }
+
+/* Per-student update timeline (Updates tab) */
+.cp-update { margin-bottom: 12px; }
+.cp-update-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cp-update-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+.cp-update-badge.daily { background: #E3F2FD; color: #1565C0; }
+.cp-update-badge.weekly { background: #F3E5F5; color: #7B1FA2; }
+.cp-update-date { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #888; }
+.cp-update-section { margin-bottom: 10px; }
+.cp-update-section:last-of-type { margin-bottom: 0; }
+.cp-update-section .cp-field-label { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 12px; color: #555; margin-bottom: 2px; }
+.cp-update-section p { margin: 0; font-size: 14px; color: #333; line-height: 1.45; }
+.cp-update-footer { margin-top: 10px; padding-top: 8px; border-top: 1px solid #f5f5f5; font-size: 12px; color: #999; }
