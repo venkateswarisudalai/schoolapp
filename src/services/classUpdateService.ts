@@ -31,7 +31,8 @@ export const createClassUpdate = async (data: Omit<ClassUpdate, 'id'>): Promise<
     try {
       const { notifyUsers } = await import('./notificationService');
       const childrenSnap = await getDocs(query(collection(db, 'children'), where('classId', '==', data.classId)));
-      const parentIds = [...new Set(childrenSnap.docs.map(d => d.data().parentIds?.[0]).filter(Boolean))];
+      // Notify every parent of every student added to this class, not just the first.
+      const parentIds = [...new Set(childrenSnap.docs.flatMap(d => (d.data().parentIds as string[] | undefined) ?? []).filter(Boolean))];
       const title = data.type === 'daily' ? `Daily Update: ${data.className}` : `Weekly Update: ${data.className}`;
       await notifyUsers(parentIds as string[], title, data.summary.substring(0, 100), 'report');
     } catch { /* best effort */ }
