@@ -35,6 +35,27 @@ export const getMaxRollNumbers = async (classIds: string[]): Promise<Record<stri
   return result;
 };
 
+// Normalize a student name for duplicate comparison: trimmed, lowercased,
+// internal whitespace collapsed. "  Aarav   Kumar " -> "aarav kumar".
+export const normalizeStudentName = (name: string): string =>
+  (name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+// Build the set of student keys ("classId|normalizedName") that already exist,
+// so the bulk import can skip students who are already in the system instead of
+// creating a second record. One read per class.
+export const getExistingStudentKeys = async (classIds: string[]): Promise<Set<string>> => {
+  const uniqueClassIds = Array.from(new Set(classIds));
+  const keys = new Set<string>();
+  await Promise.all(uniqueClassIds.map(async classId => {
+    const snap = await getDocs(query(collection(db, 'children'), where('classId', '==', classId)));
+    snap.docs.forEach(d => {
+      const name = normalizeStudentName((d.data().name || '') as string);
+      if (name) keys.add(`${classId}|${name}`);
+    });
+  }));
+  return keys;
+};
+
 // Generate next admission number for a class: mkp-{code}-{NN}.
 // Single-student path (CreateStudent.tsx). Bulk import should use getMaxRollNumbers + formatAdmissionNumber.
 const generateAdmissionNumber = async (classId: string): Promise<string> => {

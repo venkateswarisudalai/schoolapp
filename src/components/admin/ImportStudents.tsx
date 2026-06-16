@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, buildNamedUserid, parentUseridExists, type CreateStudentData } from '../../services/adminService';
+import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, buildNamedUserid, parentUseridExists, getExistingStudentKeys, normalizeStudentName, type CreateStudentData } from '../../services/adminService';
 import { getClassCode } from '../../data/classes';
 import { ChevronLeft, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import './ImportStudents.css';
@@ -192,6 +192,10 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
     // Tracks login userids already assigned in this import so two same-named
     // students don't collide on one login.
     const usedUserids = new Set<string>();
+    // Duplicate detection: rows already seen in THIS file (exact repeats) and
+    // students already in the system, so we don't create double records.
+    const existingKeys = await getExistingStudentKeys(classIds);
+    const seenRows = new Set<string>();
 
     for (const student of students) {
       try {
@@ -203,6 +207,28 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
           });
           continue;
         }
+
+        // Skip duplicates before consuming a roll number.
+        const nameKey = normalizeStudentName(student.studentName);
+        const rowKey = `${student.classId}|${nameKey}|${student.parentPhone.trim()}`;
+        if (seenRows.has(rowKey)) {
+          importResults.push({
+            success: false,
+            studentName: student.studentName,
+            error: 'Duplicate row repeated in this file — skipped',
+          });
+          continue;
+        }
+        seenRows.add(rowKey);
+        if (existingKeys.has(`${student.classId}|${nameKey}`)) {
+          importResults.push({
+            success: false,
+            studentName: student.studentName,
+            error: 'Already in the system for this class — skipped',
+          });
+          continue;
+        }
+
         nextRoll[student.classId] = (nextRoll[student.classId] || 0) + 1;
         const roll = nextRoll[student.classId];
         const admissionNumber = formatAdmissionNumber(getClassCode(student.classId), roll);
