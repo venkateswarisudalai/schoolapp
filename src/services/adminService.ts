@@ -55,6 +55,37 @@ export const generateShareablePassword = (length = 8): string => {
   return out;
 };
 
+// First name of a student as a URL/login-safe slug, used to build a
+// human-readable parent login userid. "Aarav Kumar" -> "aarav". Accents are
+// stripped and only letters kept; returns '' if there's no usable name.
+export const firstNameSlug = (name: string): string => {
+  const first = (name || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+    .trim().split(/\s+/)[0] || '';
+  return first.replace(/[^a-zA-Z]/g, '').toLowerCase();
+};
+
+// Build the name-based parent login userid for a student, e.g.
+// class lkg + "Aarav Kumar" -> "mkp-lkg-aarav". Returns '' if no usable name,
+// so callers can fall back to the numeric admission number.
+export const buildNamedUserid = (classId: string, studentName: string): string => {
+  const slug = firstNameSlug(studentName);
+  if (!slug) return '';
+  return `mkp-${getClassCode(classId)}-${slug}`;
+};
+
+// Is a parent login userid already taken? Names aren't unique, so the import
+// uses this (plus an in-batch set) to disambiguate before creating accounts.
+export const parentUseridExists = async (userid: string): Promise<boolean> => {
+  const email = buildParentLoginEmail(userid);
+  const snap = await getDocs(query(
+    collection(db, 'users'),
+    where('email', '==', email),
+    where('role', '==', 'parent'),
+  ));
+  return !snap.empty;
+};
+
 // Build the auto-assigned parent login email from an admission number.
 // e.g. mkp-prekg-02 → mkp-prekg-02@mayurischool.com
 export const buildParentLoginEmail = (admissionNumber: string): string => {
@@ -169,8 +200,12 @@ export interface CreateStudentData {
   authorizedPickups: AuthorizedPickup[];
   // Optional pre-computed admission number (used by bulk import to avoid Firestore read-after-write race)
   admissionNumber?: string;
+  // Optional pre-computed, name-based login userid (e.g. "mkp-lkg-aarav") that the
+  // bulk import assigns and de-duplicates. When omitted, the auto-generate path
+  // falls back to using the admission number as the userid.
+  loginUserid?: string;
   // When true, ignore parentEmail/parentPassword from the CSV and auto-generate
-  // shareable credentials from the admission number. Used by the bulk import flow.
+  // shareable credentials. Used by the bulk import flow.
   autoGenerateCredentials?: boolean;
 }
 
@@ -192,7 +227,10 @@ export const adminCreateStudent = async (data: CreateStudentData): Promise<{
     let parentEmail: string;
     let parentPassword: string;
     if (data.autoGenerateCredentials && data.admissionNumber) {
-      parentEmail = buildParentLoginEmail(data.admissionNumber);
+      // Login userid is the name-based id when the import supplied one (e.g.
+      // "mkp-lkg-aarav"), otherwise the numeric admission number. The student
+      // record still keeps the numeric admission number for roll ordering.
+      parentEmail = buildParentLoginEmail(data.loginUserid || data.admissionNumber);
       parentPassword = generateShareablePassword();
     } else {
       parentEmail = data.parentEmail?.trim() ||

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, type CreateStudentData } from '../../services/adminService';
+import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, buildNamedUserid, parentUseridExists, type CreateStudentData } from '../../services/adminService';
 import { getClassCode } from '../../data/classes';
 import { ChevronLeft, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import './ImportStudents.css';
@@ -189,6 +189,9 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
     const classIds = students.map(s => s.classId);
     const maxRolls = await getMaxRollNumbers(classIds);
     const nextRoll: Record<string, number> = { ...maxRolls };
+    // Tracks login userids already assigned in this import so two same-named
+    // students don't collide on one login.
+    const usedUserids = new Set<string>();
 
     for (const student of students) {
       try {
@@ -201,15 +204,29 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
           continue;
         }
         nextRoll[student.classId] = (nextRoll[student.classId] || 0) + 1;
-        const admissionNumber = formatAdmissionNumber(getClassCode(student.classId), nextRoll[student.classId]);
-        const res = await adminCreateStudent({ ...student, admissionNumber, autoGenerateCredentials: true });
+        const roll = nextRoll[student.classId];
+        const admissionNumber = formatAdmissionNumber(getClassCode(student.classId), roll);
+
+        // Build a readable, name-based login userid (e.g. "mkp-lkg-aarav") so the
+        // admin can tell whose credential is whose. Names aren't unique, so if it
+        // collides — in this same import or with an existing account — append the
+        // roll number ("mkp-lkg-aarav-28"). No usable name falls back to the
+        // numeric admission number.
+        let loginUserid = buildNamedUserid(student.classId, student.studentName);
+        if (!loginUserid) {
+          loginUserid = admissionNumber;
+        } else if (usedUserids.has(loginUserid) || await parentUseridExists(loginUserid)) {
+          loginUserid = `${loginUserid}-${roll}`;
+        }
+        usedUserids.add(loginUserid);
+
+        const res = await adminCreateStudent({ ...student, admissionNumber, loginUserid, autoGenerateCredentials: true });
         importResults.push({
           success: true,
           studentName: student.studentName,
           admissionNumber,
-          // Show the bare admission number as the userid — parents type it as-is
-          // and the login screen auto-appends @mayurischool.com.
-          loginEmail: admissionNumber,
+          // Parents type this as-is; the login screen auto-appends @mayurischool.com.
+          loginEmail: loginUserid,
           loginPassword: res.parentPassword,
         });
       } catch (error) {
@@ -295,10 +312,10 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
                 style={{ padding: '6px 12px', fontSize: '13px', cursor: 'pointer' }}
                 onClick={() => {
                   const rows = [
-                    ['Student', 'Userid (Admission #)', 'Password'],
+                    ['Student', 'Admission #', 'Userid', 'Password'],
                     ...results
                       .filter(r => r.success && r.loginEmail)
-                      .map(r => [r.studentName, r.loginEmail || '', r.loginPassword || '']),
+                      .map(r => [r.studentName, r.admissionNumber || '', r.loginEmail || '', r.loginPassword || '']),
                   ];
                   const text = rows.map(r => r.join('\t')).join('\n');
                   navigator.clipboard.writeText(text);
