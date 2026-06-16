@@ -102,27 +102,47 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
     XLSX.writeFile(wb, 'student_import_template.xlsx');
   };
 
-  // Parse a CSV string into a 2D array of cells (rows of trimmed strings).
+  // Parse a CSV string into a 2D array of trimmed cells. A proper character
+  // scanner: a newline only ends a record when it's OUTSIDE quotes, so a
+  // multi-line address cell (very common in exported sheets) stays in one
+  // field instead of being split into broken, name-less rows. Also handles
+  // commas inside quotes and escaped quotes ("").
   const csvToRows = (text: string): string[][] => {
-    const lines = text.split('\n').filter(line => line.trim());
-    return lines.map(line => {
-      const fields: string[] = [];
-      let cur = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    const s = text.replace(/\r\n?/g, '\n'); // normalize CRLF / CR -> LF
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (inQuotes) {
         if (ch === '"') {
-          inQuotes = !inQuotes;
-        } else if (ch === ',' && !inQuotes) {
-          fields.push(cur.trim());
-          cur = '';
+          if (s[i + 1] === '"') { field += '"'; i++; } // escaped quote
+          else inQuotes = false;
         } else {
-          cur += ch;
+          field += ch;
         }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        row.push(field.trim());
+        field = '';
+      } else if (ch === '\n') {
+        row.push(field.trim());
+        rows.push(row);
+        row = [];
+        field = '';
+      } else {
+        field += ch;
       }
-      fields.push(cur.trim());
-      return fields;
-    });
+    }
+    // Flush the trailing field/row (file may not end in a newline).
+    if (field.length > 0 || row.length > 0) {
+      row.push(field.trim());
+      rows.push(row);
+    }
+    // Drop fully-empty rows (blank trailing lines).
+    return rows.filter(r => r.some(c => c !== ''));
   };
 
   // Map a 2D cell grid (with header row at index 0) into StudentRow records.
