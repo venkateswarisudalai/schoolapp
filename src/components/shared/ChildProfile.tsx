@@ -1,6 +1,8 @@
-import { useState } from 'react';
-import { ChevronLeft, AlertTriangle, Phone, Heart, Shield, Pill, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, AlertTriangle, Phone, Heart, Shield, Pill, User, BookOpen, Calendar } from 'lucide-react';
 import type { Child } from '../../types/index';
+import { getStudentUpdates } from '../../services/classUpdateService';
+import type { StudentUpdate } from '../../services/classUpdateService';
 import './ChildProfile.css';
 
 interface ChildProfileProps {
@@ -9,7 +11,35 @@ interface ChildProfileProps {
 }
 
 const ChildProfile = ({ onBack, child }: ChildProfileProps) => {
-  const [activeTab, setActiveTab] = useState<'info' | 'medical' | 'contacts' | 'pickup'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'updates' | 'medical' | 'contacts' | 'pickup'>('info');
+
+  // Per-student update timeline — populated when the teacher posts a class
+  // update, which fans out a copy to every enrolled student.
+  const [updates, setUpdates] = useState<StudentUpdate[]>([]);
+  const [updatesLoading, setUpdatesLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setUpdatesLoading(true);
+      try {
+        const u = await getStudentUpdates(child.id);
+        if (!cancelled) setUpdates(u);
+      } catch {
+        if (!cancelled) setUpdates([]);
+      } finally {
+        if (!cancelled) setUpdatesLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [child.id]);
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    } catch { return dateStr; }
+  };
 
   return (
     <div className="content">
@@ -41,6 +71,7 @@ const ChildProfile = ({ onBack, child }: ChildProfileProps) => {
       <div className="cp-tabs">
         {[
           { key: 'info', label: 'Info', icon: <User size={14} /> },
+          { key: 'updates', label: 'Updates', icon: <BookOpen size={14} /> },
           { key: 'medical', label: 'Medical', icon: <Heart size={14} /> },
           { key: 'contacts', label: 'Emergency', icon: <Phone size={14} /> },
           { key: 'pickup', label: 'Pickup', icon: <Shield size={14} /> },
@@ -60,6 +91,52 @@ const ChildProfile = ({ onBack, child }: ChildProfileProps) => {
             <div className="cp-field"><span className="cp-field-label">Enrollment Date</span><span>{child.enrollmentDate}</span></div>
             {child.bloodGroup && <div className="cp-field"><span className="cp-field-label">Blood Group</span><span>{child.bloodGroup}</span></div>}
           </div>
+        )}
+
+        {/* Updates Tab — per-student copy of class updates */}
+        {activeTab === 'updates' && (
+          updatesLoading ? (
+            <div className="cp-empty" style={{ textAlign: 'center', padding: '40px' }}>Loading updates…</div>
+          ) : updates.length === 0 ? (
+            <div className="cp-card">
+              <p className="cp-empty">No updates yet. Class updates from teachers will appear here.</p>
+            </div>
+          ) : (
+            updates.map(u => (
+              <div className="cp-card cp-update" key={u.id}>
+                <div className="cp-update-header">
+                  <span className={`cp-update-badge ${u.type}`}>{u.type === 'daily' ? 'Daily' : 'Weekly'}</span>
+                  <span className="cp-update-date">
+                    <Calendar size={12} />
+                    {u.type === 'weekly' && u.weekStart ? `${formatDate(u.weekStart)} - ${formatDate(u.weekEnd || '')}` : formatDate(u.date)}
+                  </span>
+                </div>
+                <div className="cp-update-section">
+                  <span className="cp-field-label"><BookOpen size={13} /> What we did</span>
+                  <p>{u.summary}</p>
+                </div>
+                {u.activities && (
+                  <div className="cp-update-section">
+                    <span className="cp-field-label">Activities</span>
+                    <p>{u.activities}</p>
+                  </div>
+                )}
+                {u.homework && (
+                  <div className="cp-update-section">
+                    <span className="cp-field-label">📝 Homework / Bring</span>
+                    <p>{u.homework}</p>
+                  </div>
+                )}
+                {u.reminders && (
+                  <div className="cp-update-section">
+                    <span className="cp-field-label">Reminders</span>
+                    <p>{u.reminders}</p>
+                  </div>
+                )}
+                <div className="cp-update-footer">By {u.teacherName}</div>
+              </div>
+            ))
+          )
         )}
 
         {/* Medical Tab */}
