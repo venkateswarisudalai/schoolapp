@@ -35,6 +35,27 @@ export const getMaxRollNumbers = async (classIds: string[]): Promise<Record<stri
   return result;
 };
 
+// Normalize a student name for duplicate comparison: trimmed, lowercased,
+// internal whitespace collapsed. "  Aarav   Kumar " -> "aarav kumar".
+export const normalizeStudentName = (name: string): string =>
+  (name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+// Build the set of student keys ("classId|normalizedName") that already exist,
+// so the bulk import can skip students who are already in the system instead of
+// creating a second record. One read per class.
+export const getExistingStudentKeys = async (classIds: string[]): Promise<Set<string>> => {
+  const uniqueClassIds = Array.from(new Set(classIds));
+  const keys = new Set<string>();
+  await Promise.all(uniqueClassIds.map(async classId => {
+    const snap = await getDocs(query(collection(db, 'children'), where('classId', '==', classId)));
+    snap.docs.forEach(d => {
+      const name = normalizeStudentName((d.data().name || '') as string);
+      if (name) keys.add(`${classId}|${name}`);
+    });
+  }));
+  return keys;
+};
+
 // Generate next admission number for a class: mkp-{code}-{NN}.
 // Single-student path (CreateStudent.tsx). Bulk import should use getMaxRollNumbers + formatAdmissionNumber.
 const generateAdmissionNumber = async (classId: string): Promise<string> => {
@@ -53,6 +74,37 @@ export const generateShareablePassword = (length = 8): string => {
     out += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return out;
+};
+
+// First name of a student as a URL/login-safe slug, used to build a
+// human-readable parent login userid. "Aarav Kumar" -> "aarav". Accents are
+// stripped and only letters kept; returns '' if there's no usable name.
+export const firstNameSlug = (name: string): string => {
+  const first = (name || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+    .trim().split(/\s+/)[0] || '';
+  return first.replace(/[^a-zA-Z]/g, '').toLowerCase();
+};
+
+// Build the name-based parent login userid for a student, e.g.
+// class lkg + "Aarav Kumar" -> "mkp-lkg-aarav". Returns '' if no usable name,
+// so callers can fall back to the numeric admission number.
+export const buildNamedUserid = (classId: string, studentName: string): string => {
+  const slug = firstNameSlug(studentName);
+  if (!slug) return '';
+  return `mkp-${getClassCode(classId)}-${slug}`;
+};
+
+// Is a parent login userid already taken? Names aren't unique, so the import
+// uses this (plus an in-batch set) to disambiguate before creating accounts.
+export const parentUseridExists = async (userid: string): Promise<boolean> => {
+  const email = buildParentLoginEmail(userid);
+  const snap = await getDocs(query(
+    collection(db, 'users'),
+    where('email', '==', email),
+    where('role', '==', 'parent'),
+  ));
+  return !snap.empty;
 };
 
 // Build the auto-assigned parent login email from an admission number.
@@ -169,8 +221,12 @@ export interface CreateStudentData {
   authorizedPickups: AuthorizedPickup[];
   // Optional pre-computed admission number (used by bulk import to avoid Firestore read-after-write race)
   admissionNumber?: string;
+  // Optional pre-computed, name-based login userid (e.g. "mkp-lkg-aarav") that the
+  // bulk import assigns and de-duplicates. When omitted, the auto-generate path
+  // falls back to using the admission number as the userid.
+  loginUserid?: string;
   // When true, ignore parentEmail/parentPassword from the CSV and auto-generate
-  // shareable credentials from the admission number. Used by the bulk import flow.
+  // shareable credentials. Used by the bulk import flow.
   autoGenerateCredentials?: boolean;
 }
 
@@ -192,7 +248,10 @@ export const adminCreateStudent = async (data: CreateStudentData): Promise<{
     let parentEmail: string;
     let parentPassword: string;
     if (data.autoGenerateCredentials && data.admissionNumber) {
-      parentEmail = buildParentLoginEmail(data.admissionNumber);
+      // Login userid is the name-based id when the import supplied one (e.g.
+      // "mkp-lkg-aarav"), otherwise the numeric admission number. The student
+      // record still keeps the numeric admission number for roll ordering.
+      parentEmail = buildParentLoginEmail(data.loginUserid || data.admissionNumber);
       parentPassword = generateShareablePassword();
     } else {
       parentEmail = data.parentEmail?.trim() ||

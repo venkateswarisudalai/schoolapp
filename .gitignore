@@ -35,3 +35,6 @@ android/capacitor-cordova-android-plugins/build
 # Keystore
 android/keystore/*.jks
 android/app/keystore/*.jks
+
+# Firebase Admin SDK service account key (never commit)
+firebase-service-account.json

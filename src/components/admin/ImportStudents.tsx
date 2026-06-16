@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import * as XLSX from 'xlsx';
-import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, type CreateStudentData } from '../../services/adminService';
+import { adminCreateStudent, getMaxRollNumbers, formatAdmissionNumber, buildNamedUserid, parentUseridExists, getExistingStudentKeys, normalizeStudentName, type CreateStudentData } from '../../services/adminService';
 import { getClassCode } from '../../data/classes';
 import { ChevronLeft, Upload, Download, CheckCircle, AlertCircle } from 'lucide-react';
 import './ImportStudents.css';
@@ -102,27 +102,47 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
     XLSX.writeFile(wb, 'student_import_template.xlsx');
   };
 
-  // Parse a CSV string into a 2D array of cells (rows of trimmed strings).
+  // Parse a CSV string into a 2D array of trimmed cells. A proper character
+  // scanner: a newline only ends a record when it's OUTSIDE quotes, so a
+  // multi-line address cell (very common in exported sheets) stays in one
+  // field instead of being split into broken, name-less rows. Also handles
+  // commas inside quotes and escaped quotes ("").
   const csvToRows = (text: string): string[][] => {
-    const lines = text.split('\n').filter(line => line.trim());
-    return lines.map(line => {
-      const fields: string[] = [];
-      let cur = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    const s = text.replace(/\r\n?/g, '\n'); // normalize CRLF / CR -> LF
+    for (let i = 0; i < s.length; i++) {
+      const ch = s[i];
+      if (inQuotes) {
         if (ch === '"') {
-          inQuotes = !inQuotes;
-        } else if (ch === ',' && !inQuotes) {
-          fields.push(cur.trim());
-          cur = '';
+          if (s[i + 1] === '"') { field += '"'; i++; } // escaped quote
+          else inQuotes = false;
         } else {
-          cur += ch;
+          field += ch;
         }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        row.push(field.trim());
+        field = '';
+      } else if (ch === '\n') {
+        row.push(field.trim());
+        rows.push(row);
+        row = [];
+        field = '';
+      } else {
+        field += ch;
       }
-      fields.push(cur.trim());
-      return fields;
-    });
+    }
+    // Flush the trailing field/row (file may not end in a newline).
+    if (field.length > 0 || row.length > 0) {
+      row.push(field.trim());
+      rows.push(row);
+    }
+    // Drop fully-empty rows (blank trailing lines).
+    return rows.filter(r => r.some(c => c !== ''));
   };
 
   // Map a 2D cell grid (with header row at index 0) into StudentRow records.
@@ -189,6 +209,13 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
     const classIds = students.map(s => s.classId);
     const maxRolls = await getMaxRollNumbers(classIds);
     const nextRoll: Record<string, number> = { ...maxRolls };
+    // Tracks login userids already assigned in this import so two same-named
+    // students don't collide on one login.
+    const usedUserids = new Set<string>();
+    // Duplicate detection: rows already seen in THIS file (exact repeats) and
+    // students already in the system, so we don't create double records.
+    const existingKeys = await getExistingStudentKeys(classIds);
+    const seenRows = new Set<string>();
 
     for (const student of students) {
       try {
@@ -200,16 +227,52 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
           });
           continue;
         }
+
+        // Skip duplicates before consuming a roll number.
+        const nameKey = normalizeStudentName(student.studentName);
+        const rowKey = `${student.classId}|${nameKey}|${student.parentPhone.trim()}`;
+        if (seenRows.has(rowKey)) {
+          importResults.push({
+            success: false,
+            studentName: student.studentName,
+            error: 'Duplicate row repeated in this file — skipped',
+          });
+          continue;
+        }
+        seenRows.add(rowKey);
+        if (existingKeys.has(`${student.classId}|${nameKey}`)) {
+          importResults.push({
+            success: false,
+            studentName: student.studentName,
+            error: 'Already in the system for this class — skipped',
+          });
+          continue;
+        }
+
         nextRoll[student.classId] = (nextRoll[student.classId] || 0) + 1;
-        const admissionNumber = formatAdmissionNumber(getClassCode(student.classId), nextRoll[student.classId]);
-        const res = await adminCreateStudent({ ...student, admissionNumber, autoGenerateCredentials: true });
+        const roll = nextRoll[student.classId];
+        const admissionNumber = formatAdmissionNumber(getClassCode(student.classId), roll);
+
+        // Build a readable, name-based login userid (e.g. "mkp-lkg-aarav") so the
+        // admin can tell whose credential is whose. Names aren't unique, so if it
+        // collides — in this same import or with an existing account — append the
+        // roll number ("mkp-lkg-aarav-28"). No usable name falls back to the
+        // numeric admission number.
+        let loginUserid = buildNamedUserid(student.classId, student.studentName);
+        if (!loginUserid) {
+          loginUserid = admissionNumber;
+        } else if (usedUserids.has(loginUserid) || await parentUseridExists(loginUserid)) {
+          loginUserid = `${loginUserid}-${roll}`;
+        }
+        usedUserids.add(loginUserid);
+
+        const res = await adminCreateStudent({ ...student, admissionNumber, loginUserid, autoGenerateCredentials: true });
         importResults.push({
           success: true,
           studentName: student.studentName,
           admissionNumber,
-          // Show the bare admission number as the userid — parents type it as-is
-          // and the login screen auto-appends @mayurischool.com.
-          loginEmail: admissionNumber,
+          // Parents type this as-is; the login screen auto-appends @mayurischool.com.
+          loginEmail: loginUserid,
           loginPassword: res.parentPassword,
         });
       } catch (error) {
@@ -295,10 +358,10 @@ const ImportStudents = ({ onBack }: ImportStudentsProps) => {
                 style={{ padding: '6px 12px', fontSize: '13px', cursor: 'pointer' }}
                 onClick={() => {
                   const rows = [
-                    ['Student', 'Userid (Admission #)', 'Password'],
+                    ['Student', 'Admission #', 'Userid', 'Password'],
                     ...results
                       .filter(r => r.success && r.loginEmail)
-                      .map(r => [r.studentName, r.loginEmail || '', r.loginPassword || '']),
+                      .map(r => [r.studentName, r.admissionNumber || '', r.loginEmail || '', r.loginPassword || '']),
                   ];
                   const text = rows.map(r => r.join('\t')).join('\n');
                   navigator.clipboard.writeText(text);

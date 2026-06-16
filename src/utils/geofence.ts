@@ -27,16 +27,19 @@ export interface SchoolLocation {
 export const SCHOOL_LOCATION: SchoolLocation = {
   lat: 13.106517,
   lng: 80.131941,
-  radiusMeters: 120,
+  // 150 m while the pin is unverified on-site, to avoid locking out teachers
+  // who are genuinely on campus. Tighten to ~120 once a teacher confirms
+  // check-in works standing at the building.
+  radiusMeters: 150,
 };
 
 // Master switch. Set to false to fall back to the old QR-only behaviour
 // (e.g. if GPS is causing problems on a given day) without ripping out code.
-// 2026-06-15: TEMPORARILY DISABLED so teachers can check in immediately while
-// the app isn't on the Play Store yet and the 120m pin above is unverified
-// on-site. The campus coordinates are kept above — flip this back to `true`
-// once a teacher confirms check-in works from the building.
-export const ENFORCE_GEOFENCE = false;
+// 2026-06-16: Re-enabled — staff check-in must be on campus again. The web app
+// reads location via the browser; the Android app needs ACCESS_FINE_LOCATION
+// (added to AndroidManifest) and a fresh APK build for GPS to work in the
+// WebView. Verify the pin on-site, then tighten radiusMeters above.
+export const ENFORCE_GEOFENCE = true;
 
 // Phone GPS is noisy. If the reported accuracy is worse than this many metres
 // we don't trust it enough to reject someone who might actually be on-site, so
