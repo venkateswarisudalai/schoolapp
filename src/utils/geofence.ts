@@ -32,7 +32,11 @@ export const SCHOOL_LOCATION: SchoolLocation = {
 
 // Master switch. Set to false to fall back to the old QR-only behaviour
 // (e.g. if GPS is causing problems on a given day) without ripping out code.
-export const ENFORCE_GEOFENCE = true;
+// 2026-06-15: TEMPORARILY DISABLED so teachers can check in immediately while
+// the app isn't on the Play Store yet and the 120m pin above is unverified
+// on-site. The campus coordinates are kept above — flip this back to `true`
+// once a teacher confirms check-in works from the building.
+export const ENFORCE_GEOFENCE = false;
 
 // Phone GPS is noisy. If the reported accuracy is worse than this many metres
 // we don't trust it enough to reject someone who might actually be on-site, so
