@@ -38,3 +38,17 @@ android/app/keystore/*.jks
 
 # Firebase Admin SDK service account key (never commit)
 firebase-service-account.json
+
+# Exported student/parent login credentials (never commit)
+*_credentials.csv
+
+# Signed release binaries (39 MB of .aab/.apk — publish via Play Console, not git)
+releases/
+
+# One-shot import scripts: these embed real student/parent PII
+# (names, DOB, blood group, home address, phone, medical notes). Never commit.
+scripts/import*.js
+
+# Local backup copies
+*.OLD.*
+*.PREVIOUS.*

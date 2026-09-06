@@ -74,72 +74,113 @@ export interface GeofenceResult {
   reason?: string;
 }
 
-// Read the device location once and check it against the school geofence.
-// Resolves (never rejects) so the caller can show a friendly message.
-export const checkWithinSchool = (): Promise<GeofenceResult> =>
-  new Promise((resolve) => {
-    if (!ENFORCE_GEOFENCE) {
-      resolve({ ok: true });
-      return;
-    }
+interface Coords { latitude: number; longitude: number; accuracy: number | null }
 
-    if (SCHOOL_LOCATION.lat === 0 && SCHOOL_LOCATION.lng === 0) {
-      resolve({
-        ok: false,
-        reason:
-          'School location is not configured yet. Ask the admin to set the campus coordinates.',
+// A single GPS fix, or a friendly reason it couldn't be obtained.
+type PositionResult = { coords: Coords } | { error: string };
+
+// Read one GPS fix. On Android/iOS we go through @capacitor/geolocation so the
+// OS runtime location permission is actually requested and granted — a WebView
+// navigator.geolocation call over the remote server.url does NOT trigger that
+// prompt on its own, which is why teachers were being blocked. On the web we
+// fall back to the browser's navigator.geolocation.
+const readDevicePosition = async (): Promise<PositionResult> => {
+  const { Capacitor } = await import('@capacitor/core');
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { Geolocation } = await import('@capacitor/geolocation');
+      const perm = await Geolocation.requestPermissions();
+      if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') {
+        return { error: 'Location permission was denied. Please allow location access to check in.' };
+      }
+      const pos = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       });
-      return;
+      return {
+        coords: {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy ?? null,
+        },
+      };
+    } catch {
+      return { error: 'Could not read your location. Make sure GPS is on and try again.' };
     }
+  }
 
-    if (!('geolocation' in navigator)) {
-      resolve({
-        ok: false,
-        reason: 'This device cannot share its location, so check-in is blocked.',
-      });
-      return;
-    }
-
+  // Web fallback.
+  if (!('geolocation' in navigator)) {
+    return { error: 'This device cannot share its location, so check-in is blocked.' };
+  }
+  return new Promise<PositionResult>((resolve) => {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords;
-
-        if (accuracy != null && accuracy > MAX_ACCEPTABLE_ACCURACY_M) {
-          resolve({
-            ok: false,
-            accuracyMeters: Math.round(accuracy),
-            lat: latitude,
-            lng: longitude,
-            reason:
-              `Your GPS signal is weak (±${Math.round(accuracy)} m). ` +
-              'Step outside or wait a moment, then try again.',
-          });
-          return;
-        }
-
-        const dist = distanceMeters(
-          latitude, longitude, SCHOOL_LOCATION.lat, SCHOOL_LOCATION.lng,
-        );
-        const within = dist <= SCHOOL_LOCATION.radiusMeters;
-        resolve({
-          ok: within,
-          distanceMeters: Math.round(dist),
-          accuracyMeters: accuracy != null ? Math.round(accuracy) : undefined,
-          lat: latitude,
-          lng: longitude,
-          reason: within
-            ? undefined
-            : `You appear to be ${Math.round(dist)} m from school. ` +
-              `You must be within ${SCHOOL_LOCATION.radiusMeters} m of campus to check in.`,
-        });
-      },
-      (err) => {
-        const reason =
-          err.code === err.PERMISSION_DENIED
-            ? 'Location permission was denied. Please allow location access to check in.'
-            : 'Could not read your location. Make sure GPS is on and try again.';
-        resolve({ ok: false, reason });
-      },
+      (pos) => resolve({
+        coords: {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy ?? null,
+        },
+      }),
+      (err) => resolve({
+        error: err.code === err.PERMISSION_DENIED
+          ? 'Location permission was denied. Please allow location access to check in.'
+          : 'Could not read your location. Make sure GPS is on and try again.',
+      }),
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   });
+};
+
+// Read the device location once and check it against the school geofence.
+// Resolves (never rejects) so the caller can show a friendly message.
+export const checkWithinSchool = async (): Promise<GeofenceResult> => {
+  if (!ENFORCE_GEOFENCE) {
+    return { ok: true };
+  }
+
+  if (SCHOOL_LOCATION.lat === 0 && SCHOOL_LOCATION.lng === 0) {
+    return {
+      ok: false,
+      reason:
+        'School location is not configured yet. Ask the admin to set the campus coordinates.',
+    };
+  }
+
+  const result = await readDevicePosition();
+  if ('error' in result) {
+    return { ok: false, reason: result.error };
+  }
+
+  const { latitude, longitude, accuracy } = result.coords;
+
+  if (accuracy != null && accuracy > MAX_ACCEPTABLE_ACCURACY_M) {
+    return {
+      ok: false,
+      accuracyMeters: Math.round(accuracy),
+      lat: latitude,
+      lng: longitude,
+      reason:
+        `Your GPS signal is weak (±${Math.round(accuracy)} m). ` +
+        'Step outside or wait a moment, then try again.',
+    };
+  }
+
+  const dist = distanceMeters(
+    latitude, longitude, SCHOOL_LOCATION.lat, SCHOOL_LOCATION.lng,
+  );
+  const within = dist <= SCHOOL_LOCATION.radiusMeters;
+  return {
+    ok: within,
+    distanceMeters: Math.round(dist),
+    accuracyMeters: accuracy != null ? Math.round(accuracy) : undefined,
+    lat: latitude,
+    lng: longitude,
+    reason: within
+      ? undefined
+      : `You appear to be ${Math.round(dist)} m from school. ` +
+        `You must be within ${SCHOOL_LOCATION.radiusMeters} m of campus to check in.`,
+  };
+};

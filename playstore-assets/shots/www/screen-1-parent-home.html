@@ -1,0 +1,59 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=480">
+<link rel="stylesheet" href="/App.css">
+<style>
+  html,body{width:480px;height:854px;overflow:hidden;background:#f8fafc}
+  .app-container,.main-layout{min-height:854px;height:854px;overflow:hidden}
+  .header{position:static}
+  .content{padding-bottom:88px}
+  .page-header{padding:0 0 12px;border:0}
+  .page-title{font-size:20px;font-weight:600}
+</style></head><body>
+<div class="app-container"><div class="main-layout">
+<header class="header"><div class="header-top">
+  <h1 class="header-title">Parent Dashboard</h1>
+  <div class="header-user"><div class="user-avatar">R</div></div>
+</div></header>
+<div class="content">
+  <div class="child-card">
+    <div class="child-avatar">👧</div>
+    <div class="child-info"><h3>Aanya Rao</h3><p>LKG • 4-5 years</p></div>
+    <div class="child-status present">Present</div>
+  </div>
+  <div class="quick-actions">
+    <button class="quick-action"><div class="quick-action-icon attendance"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></div><span class="quick-action-label">Attendance</span></button>
+    <button class="quick-action"><div class="quick-action-icon messages"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg></div><span class="quick-action-label">Messages</span></button>
+    <button class="quick-action"><div class="quick-action-icon fees"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg></div><span class="quick-action-label">Fees</span></button>
+    <button class="quick-action"><div class="quick-action-icon announcements"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg></div><span class="quick-action-label">Announcements</span></button>
+    <button class="quick-action"><div class="quick-action-icon calendar"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></div><span class="quick-action-label">Calendar</span></button>
+    <button class="quick-action"><div class="quick-action-icon reports"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></div><span class="quick-action-label">Reports</span></button>
+    <button class="quick-action"><div class="quick-action-icon gallery"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg></div><span class="quick-action-label">Gallery</span></button>
+    <button class="quick-action"><div class="quick-action-icon qr"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg></div><span class="quick-action-label">Check In</span></button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Today's Activity</h3><span class="card-subtitle">Updated 10 min ago</span></div>
+    <div class="activity-feed">
+      <div class="activity-item"><div class="activity-icon meal">🍽️</div>
+        <div class="activity-content"><div class="activity-title">Snack</div>
+        <div class="activity-description">Fruit bowl &amp; milk - ate most</div></div>
+        <div class="activity-time">10:15 AM</div></div>
+      <div class="activity-item"><div class="activity-icon nap">😴</div>
+        <div class="activity-content"><div class="activity-title">Nap Time</div>
+        <div class="activity-description">Slept well - restful</div></div>
+        <div class="activity-time">1:00 - 2:15 PM</div></div>
+      <div class="activity-item"><div class="activity-icon activity">🎨</div>
+        <div class="activity-content"><div class="activity-title">Art &amp; Craft</div>
+        <div class="activity-description">Made paper butterflies</div></div>
+        <div class="activity-time">11:00 AM</div></div>
+      <div class="activity-item"><div class="activity-icon activity">📖</div>
+        <div class="activity-content"><div class="activity-title">Story Time</div>
+        <div class="activity-description">The Thirsty Crow</div></div>
+        <div class="activity-time">2:30 PM</div></div>
+      <div class="activity-item"><div class="activity-icon meal">🍎</div>
+        <div class="activity-content"><div class="activity-title">Lunch</div>
+        <div class="activity-description">Rice, dal &amp; curd - finished</div></div>
+        <div class="activity-time">12:30 PM</div></div>
+    </div>
+  </div>
+</div><nav class="bottom-nav"><button class="nav-item active"><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="nav-item-label">Home</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg><span class="nav-item-label">Calendar</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg><span class="nav-item-label">Messages</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="nav-item-label">Announcements</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-item-label">Profile</span></button></nav></div></div>
+</body></html>

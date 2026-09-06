@@ -33,7 +33,7 @@ Education
 school management, attendance, fee management, preschool, kindergarten, student management, parent communication, education app
 
 ## Privacy Policy URL
-(You need to create one — use https://app-privacy-policy-generator.firebaseapp.com/ for free)
+https://school-c0203.web.app/privacy-policy.html
 
 ## Contact Email
-(Your email address)
+venkateswari1095@gmail.com

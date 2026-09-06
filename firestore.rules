@@ -27,16 +27,31 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      // Only authenticated users can read profiles
-      allow read: if request.auth != null;
+      // You can always read your own profile (needed at login to resolve role).
+      // Staff can read everyone. Parents are limited to staff profiles only —
+      // MessagesPage and QRScanner need teacher/admin records to start a
+      // conversation, but a parent has no reason to read other parents.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        isAdmin() ||
+        isTeacher() ||
+        (isApproved() && resource.data.get('role', '') in ['teacher', 'admin'])
+      );
 
       // Anyone authenticated can create their own profile OR any other user's profile
       // This allows newly created users (by admin) to have their profile created
       allow create: if request.auth != null;
 
-      // Users can update their own profile, admins can update any
-      allow update: if request.auth != null &&
-        (request.auth.uid == userId || isAdmin());
+      // Admins can update any profile. Everyone else may edit only their own,
+      // and may NOT change their own role or approvalStatus — without this a
+      // parent could self-promote to admin straight from the browser console,
+      // since the Firebase config ships in the public bundle.
+      allow update: if isAdmin() || (
+        request.auth != null &&
+        request.auth.uid == userId &&
+        request.resource.data.get('role', '') == resource.data.get('role', '') &&
+        request.resource.data.get('approvalStatus', '') == resource.data.get('approvalStatus', '')
+      );
 
       // Only admins can delete
       allow delete: if isAdmin();
@@ -66,7 +81,16 @@ service cloud.firestore {
 
     // Children collection
     match /children/{childId} {
-      allow read: if isApproved();
+      // Child records carry medical data (allergies, medications, conditions,
+      // doctor contacts), so reads are scoped to ownership. Staff see all
+      // students; a parent sees only their own children. `.get(field, default)`
+      // keeps legacy records that predate `parentIds` from erroring the rule.
+      allow read: if isAdmin() || isTeacher() || (
+        isApproved() && (
+          request.auth.uid in resource.data.get('parentIds', []) ||
+          resource.data.get('parentId', '') == request.auth.uid
+        )
+      );
       // Allow authenticated users to create (for admin-created students where session switches)
       allow create: if request.auth != null;
       allow update, delete: if isAdmin();

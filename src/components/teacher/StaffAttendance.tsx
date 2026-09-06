@@ -5,6 +5,7 @@ import {
   recordStaffAttendance,
   getTodayStaffRecordsForTeacher,
 } from '../../services/staffAttendanceService';
+import { checkWithinSchool } from '../../utils/geofence';
 import type { StaffAttendanceRecord } from '../../types/index';
 
 interface Props {
@@ -19,6 +20,8 @@ const StaffAttendance = ({ onBack }: Props) => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState<{ type: 'check-in' | 'check-out'; time: string } | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const loadStatus = async () => {
     if (!user) return;
@@ -43,7 +46,20 @@ const StaffAttendance = ({ onBack }: Props) => {
 
   const handleAction = async (type: 'check-in' | 'check-out') => {
     if (!user || processing) return;
+    setGeoError(null);
     setProcessing(true);
+
+    // Geofence gate: you must be physically on campus. We read GPS first and
+    // bail out (without writing anything) if you're outside the radius.
+    setLocating(true);
+    const geo = await checkWithinSchool();
+    setLocating(false);
+    if (!geo.ok) {
+      setGeoError(geo.reason || 'You must be at school to record attendance.');
+      setProcessing(false);
+      return;
+    }
+
     try {
       const saved = await recordStaffAttendance({
         teacherId: user.id,
@@ -51,6 +67,10 @@ const StaffAttendance = ({ onBack }: Props) => {
         teacherEmail: user.email,
         type,
         method: 'qr',
+        lat: geo.lat,
+        lng: geo.lng,
+        accuracyMeters: geo.accuracyMeters,
+        distanceMeters: geo.distanceMeters,
       });
       setSuccess({ type, time: saved.istTime });
       setTimeout(() => {
@@ -145,13 +165,23 @@ const StaffAttendance = ({ onBack }: Props) => {
                   : 'linear-gradient(135deg,#FF9800,#F57C00)',
               }}
             >
-              {processing ? 'Saving…' : (
+              {locating ? 'Checking your location…' : processing ? 'Saving…' : (
                 <>
                   {nextAction === 'check-in' ? <LogIn size={22} /> : <LogOut size={22} />}
                   <span>{nextAction === 'check-in' ? 'Check In' : 'Check Out'}</span>
                 </>
               )}
             </button>
+
+            {geoError && (
+              <div style={{
+                marginTop: 14, padding: '12px 14px', borderRadius: 10,
+                background: '#fef2f2', border: '1px solid #fecaca',
+                color: '#b91c1c', fontSize: 14, textAlign: 'center', fontWeight: 600,
+              }}>
+                📍 {geoError}
+              </div>
+            )}
 
             {/* Today's timeline */}
             {records.length > 0 && (

@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.schoolapp.mayuri",
+      "sha256_cert_fingerprints": [
+        "4B:B1:48:CB:4A:C3:57:09:AE:11:6B:63:80:21:28:0F:2F:C0:3E:76:CA:D1:E0:95:84:D5:34:C7:44:C1:FF:41"
+      ]
+    }
+  }
+]

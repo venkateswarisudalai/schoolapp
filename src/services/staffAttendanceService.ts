@@ -36,6 +36,10 @@ interface RecordInput {
   teacherEmail: string;
   type: 'check-in' | 'check-out';
   method?: 'qr' | 'manual';
+  lat?: number;
+  lng?: number;
+  accuracyMeters?: number;
+  distanceMeters?: number;
 }
 
 export const recordStaffAttendance = async (input: RecordInput): Promise<StaffAttendanceRecord> => {
@@ -49,6 +53,12 @@ export const recordStaffAttendance = async (input: RecordInput): Promise<StaffAt
     istDate: istDateKey(now),
     istTime: istTimeLabel(now),
     method: input.method || 'qr',
+    // Only attach geo fields that are actually present — Firestore rejects
+    // `undefined` values, so we spread conditionally.
+    ...(input.lat != null ? { lat: input.lat } : {}),
+    ...(input.lng != null ? { lng: input.lng } : {}),
+    ...(input.accuracyMeters != null ? { accuracyMeters: input.accuracyMeters } : {}),
+    ...(input.distanceMeters != null ? { distanceMeters: input.distanceMeters } : {}),
   };
   const docRef = await addDoc(collection(db, COLLECTION_NAME), {
     ...data,

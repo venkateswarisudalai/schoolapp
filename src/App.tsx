@@ -295,12 +295,6 @@ const ParentDashboard = ({ setCurrentPage, children, activities, announcements }
           </div>
           <span className="quick-action-label">Check In</span>
         </button>
-        <button className="quick-action" onClick={() => setCurrentPage('daily-report')}>
-          <div className="quick-action-icon daily-report">
-            <FileBarChart size={24} />
-          </div>
-          <span className="quick-action-label">Daily Report</span>
-        </button>
         <button className="quick-action" onClick={() => setCurrentPage('class-updates')}>
           <div className="quick-action-icon daily-report">
             <FileBarChart size={24} />
@@ -606,7 +600,7 @@ const AdminDashboard = ({ setCurrentPage, children, teachers, announcements: _an
           <div className="quick-action-icon attendance-analytics">
             <BarChart3 size={24} />
           </div>
-          <span className="quick-action-label">Analytics</span>
+          <span className="quick-action-label">Attendance Analytics</span>
         </button>
         <button className="quick-action" onClick={() => setCurrentPage('create-announcement')}>
           <div className="quick-action-icon announcements">
@@ -707,10 +701,14 @@ const AdminDashboard = ({ setCurrentPage, children, teachers, announcements: _an
 // Attendance Page (Teacher/Admin can mark, Parent can view)
 const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Child[] }) => {
   const { user } = useAuth();
-  const [date] = useState(new Date());
+  const [date, setDate] = useState(new Date());
   const [attendance, setAttendance] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // When true we show the editable present/absent/late buttons; when false we
+  // show a read-only review of what was saved (with an "Edit Attendance" button
+  // to come back and change a latecomer later in the day).
+  const [editing, setEditing] = useState(true);
   const [loading, setLoading] = useState(true);
   const [roster, setRoster] = useState<Child[]>(children);
 
@@ -771,6 +769,24 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
     }));
   };
 
+  // Day navigation. Shifting the date triggers the load effect above, which
+  // re-reads that day's saved records. We can't mark attendance for a future
+  // date, so the "next" arrow is capped at today.
+  const toDateKey = (d: Date) => d.toISOString().split('T')[0];
+  const isToday = toDateKey(date) === toDateKey(new Date());
+  const changeDay = (deltaDays: number) => {
+    setDate(prev => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() + deltaDays);
+      // Never go past today.
+      if (toDateKey(next) > toDateKey(new Date())) return prev;
+      return next;
+    });
+    // Land on the editable view for the day we're navigating to.
+    setEditing(true);
+    setSaved(false);
+  };
+
   const handleSaveAttendance = async () => {
     if (!user) return;
 
@@ -794,10 +810,10 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
       // Save to Firebase
       await bulkSaveAttendance(attendanceRecords);
 
+      // Switch to the read-only review screen instead of bouncing back, so the
+      // teacher can confirm what was saved and re-open editing for latecomers.
       setSaved(true);
-      setTimeout(() => {
-        onBack();
-      }, 2000);
+      setEditing(false);
     } catch (error) {
       console.error('Error saving attendance:', error);
       alert('Failed to save attendance. Please try again.');
@@ -806,44 +822,53 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
     }
   };
 
-  if (saved) {
-    return (
-      <div className="content">
-        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-          <div style={{
-            width: '80px',
-            height: '80px',
-            background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 24px',
-            color: 'white',
-            fontSize: '48px'
-          }}>
-            ✓
-          </div>
-          <h2>Attendance Saved!</h2>
-          <p>Attendance has been successfully recorded.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="content">
       <div className="page-header">
         <button className="back-btn" onClick={onBack}>
           <ChevronLeft size={24} />
         </button>
-        <h2 className="page-title">{canMarkAttendance ? 'Mark Attendance' : 'View Attendance'}</h2>
+        <h2 className="page-title">
+          {canMarkAttendance ? (editing ? 'Mark Attendance' : 'Attendance Saved') : 'View Attendance'}
+        </h2>
       </div>
 
+      {saved && !editing && (
+        <div style={{
+          margin: '0 16px 8px',
+          padding: '12px 16px',
+          background: '#e8f5e9',
+          border: '1px solid #c8e6c9',
+          borderRadius: '8px',
+          color: '#2e7d32',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '14px',
+          fontWeight: 500,
+        }}>
+          <CheckCircle size={18} />
+          Attendance saved. Tap "Edit Attendance" to update a latecomer.
+        </div>
+      )}
+
       <div className="attendance-date">
-        <button><ChevronLeft size={20} /></button>
-        <span>{date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
-        <button><ChevronRight size={20} /></button>
+        <button onClick={() => changeDay(-1)} aria-label="Previous day">
+          <ChevronLeft size={20} />
+        </button>
+        <span>
+          {isToday
+            ? 'Today'
+            : date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+        </span>
+        <button
+          onClick={() => changeDay(1)}
+          disabled={isToday}
+          aria-label="Next day"
+          style={{ opacity: isToday ? 0.3 : 1, cursor: isToday ? 'default' : 'pointer' }}
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
 
       {loading ? (
@@ -906,7 +931,7 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
                 {mockClasses.find(c => c.id === child.classId)?.name}
               </div>
             </div>
-            {canMarkAttendance ? (
+            {canMarkAttendance && editing ? (
               <div className="attendance-status">
                 <button
                   className={`status-btn present ${attendance[child.id] === 'present' ? 'active' : ''}`}
@@ -963,7 +988,7 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
         </div>
       )}
 
-      {!loading && canMarkAttendance && (
+      {!loading && canMarkAttendance && editing && (
         <div style={{ padding: '16px' }}>
           <button
             className="btn btn-primary btn-block"
@@ -971,6 +996,25 @@ const AttendancePage = ({ onBack, children }: { onBack: () => void; children: Ch
             disabled={saving}
           >
             {saving ? 'Saving...' : 'Save Attendance'}
+          </button>
+        </div>
+      )}
+
+      {!loading && canMarkAttendance && !editing && (
+        <div style={{ padding: '16px', display: 'flex', gap: '12px' }}>
+          <button
+            className="btn btn-secondary"
+            style={{ flex: 1 }}
+            onClick={() => { setEditing(true); setSaved(false); }}
+          >
+            Edit Attendance
+          </button>
+          <button
+            className="btn btn-primary"
+            style={{ flex: 1 }}
+            onClick={onBack}
+          >
+            Done
           </button>
         </div>
       )}
@@ -1254,6 +1298,37 @@ const MainApp = () => {
       requestNotificationPermission(user.id).catch(() => {});
     });
   }, [user]);
+
+  // Native deep-link routing. On Android the app loads the remote server.url,
+  // so when it's opened by scanning a QR (App Link) the WebView loads the base
+  // URL WITHOUT the ?action query — the URLSearchParams check above never sees
+  // it. Capacitor's App plugin gives us the real launch/opened URL instead.
+  useEffect(() => {
+    let removeListener: (() => void) | undefined;
+    let cancelled = false;
+    (async () => {
+      const { Capacitor } = await import('@capacitor/core');
+      if (!Capacitor.isNativePlatform()) return;
+      const { App: CapApp } = await import('@capacitor/app');
+      const routeFromUrl = (url?: string | null) => {
+        if (!url) return;
+        try {
+          const action = new URL(url).searchParams.get('action');
+          if (action === 'checkin') setCurrentPage('qr-scan');
+          else if (action === 'teacher-attendance') setCurrentPage('staff-attendance');
+        } catch { /* not a parseable URL — ignore */ }
+      };
+      // Cold start: the app was launched by the deep link.
+      const launch = await CapApp.getLaunchUrl();
+      if (cancelled) return;
+      routeFromUrl(launch?.url);
+      // Warm start: the app was already running when the link was opened.
+      const handle = await CapApp.addListener('appUrlOpen', d => routeFromUrl(d.url));
+      if (cancelled) { handle.remove(); return; }
+      removeListener = () => handle.remove();
+    })();
+    return () => { cancelled = true; removeListener?.(); };
+  }, []);
 
   // Load real data from Firebase
   useEffect(() => {

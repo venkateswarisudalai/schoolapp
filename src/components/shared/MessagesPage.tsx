@@ -17,7 +17,7 @@ import {
   getOrCreateConversation,
   getOrCreateClassGroup
 } from '../../services/messageService';
-import { getAllTeachers, getAllParents, type Teacher, type Parent } from '../../services/teacherService';
+import { getAllTeachers, getAllParents, getAllUsers, type Teacher, type Parent } from '../../services/teacherService';
 import { getAllChildren } from '../../services/childrenService';
 import type { Message, Conversation, Child } from '../../types/index';
 
@@ -42,18 +42,20 @@ const MessagesPage = ({ onBack }: MessagesPageProps) => {
   const [loading, setLoading] = useState(true);
   const [showNewChat, setShowNewChat] = useState(false);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [admins, setAdmins] = useState<{ id: string; name: string }[]>([]);
   const [parents, setParents] = useState<Parent[]>([]);
   const [students, setStudents] = useState<Child[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Build a userId -> {name, role} lookup from loaded teachers + parents
+  // Build a userId -> {name, role} lookup from loaded teachers + admins + parents
   const userLookup = useMemo(() => {
     const map = new Map<string, { name: string; role: string }>();
     teachers.forEach(t => map.set(t.id, { name: t.name, role: 'teacher' }));
+    admins.forEach(a => map.set(a.id, { name: a.name, role: 'admin' }));
     parents.forEach(p => map.set(p.id, { name: p.name, role: 'parent' }));
     return map;
-  }, [teachers, parents]);
+  }, [teachers, admins, parents]);
 
   // Subscribe to raw conversations
   useEffect(() => {
@@ -126,19 +128,26 @@ const MessagesPage = ({ onBack }: MessagesPageProps) => {
 
       try {
         if (user.role === 'parent') {
-          // Parents can message teachers and admin
-          const teacherList = await getAllTeachers();
+          // Parents can message teachers and admin/office
+          const [teacherList, adminList] = await Promise.all([
+            getAllTeachers(),
+            getAllUsers('admin')
+          ]);
           setTeachers(teacherList);
+          setAdmins(adminList.map(a => ({ id: a.id, name: a.name || 'Admin / Office' })));
         } else if (user.role === 'teacher' || user.role === 'admin') {
-          // Teachers/Admins see contacts grouped by student (messages go to parent)
-          const [teacherList, parentList, studentList] = await Promise.all([
+          // Teachers/Admins see contacts grouped by student (messages go to parent),
+          // plus the admin/office so staff can reach the front desk too.
+          const [teacherList, parentList, studentList, adminList] = await Promise.all([
             getAllTeachers(),
             getAllParents(),
-            getAllChildren()
+            getAllChildren(),
+            getAllUsers('admin')
           ]);
           setTeachers(teacherList.filter(t => t.id !== user.id));
           setParents(parentList);
           setStudents(studentList);
+          setAdmins(adminList.filter(a => a.id !== user.id).map(a => ({ id: a.id, name: a.name || 'Admin / Office' })));
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -285,6 +294,9 @@ const MessagesPage = ({ onBack }: MessagesPageProps) => {
     const filteredTeachers = teachers.filter(t =>
       t.name.toLowerCase().includes(query)
     );
+    const filteredAdmins = admins.filter(a =>
+      a.name.toLowerCase().includes(query)
+    );
     const filteredStudents = students.filter(s =>
       s.name.toLowerCase().includes(query) ||
       parents.find(p => p.id === s.parentIds?.[0])?.name.toLowerCase().includes(query)
@@ -360,6 +372,28 @@ const MessagesPage = ({ onBack }: MessagesPageProps) => {
             </>
           )}
 
+          {/* Admin / Office Section - visible to everyone */}
+          {filteredAdmins.length > 0 && (
+            <>
+              <h3 className="contact-section-title">Admin / Office</h3>
+              {filteredAdmins.map((admin) => (
+                <div
+                  className="contact-item"
+                  key={admin.id}
+                  onClick={() => handleStartNewChat(admin.id, admin.name)}
+                >
+                  <div className="contact-avatar teacher">
+                    <User size={20} />
+                  </div>
+                  <div className="contact-info">
+                    <div className="contact-name">{admin.name}</div>
+                    <div className="contact-role">Admin</div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
           {/* Teachers Section - visible to everyone */}
           {filteredTeachers.length > 0 && (
             <>
@@ -417,6 +451,7 @@ const MessagesPage = ({ onBack }: MessagesPageProps) => {
           )}
 
           {filteredTeachers.length === 0 &&
+           filteredAdmins.length === 0 &&
            filteredStudents.length === 0 && (
             <p className="no-contacts">No contacts found</p>
           )}

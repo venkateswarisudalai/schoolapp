@@ -18,6 +18,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- App Links: open scanned https://school-c0203.web.app QR links
+                 in this installed app instead of the browser. Requires a valid
+                 /.well-known/assetlinks.json served on the domain (see public/). -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="school-c0203.web.app" />
+            </intent-filter>
         </activity>
 
         <provider

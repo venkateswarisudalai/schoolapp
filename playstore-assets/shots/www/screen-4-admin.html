@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=480">
+<link rel="stylesheet" href="/App.css">
+<style>
+  html,body{width:480px;height:854px;overflow:hidden;background:#f8fafc}
+  .app-container,.main-layout{min-height:854px;height:854px;overflow:hidden}
+  .header{position:static}
+  .content{padding-bottom:88px}
+  .page-header{padding:0 0 12px;border:0}
+  .page-title{font-size:20px;font-weight:600}
+</style></head><body>
+<div class="app-container"><div class="main-layout">
+<header class="header"><div class="header-top">
+  <h1 class="header-title">Admin Dashboard</h1>
+  <div class="header-user"><div class="user-avatar">V</div></div>
+</div></header>
+<div class="content">
+  <div class="stats-grid">
+    <div class="stat-card primary"><div class="stat-value">148</div><div class="stat-label">Total Students</div></div>
+    <div class="stat-card success"><div class="stat-value">133</div><div class="stat-label">Present Today</div></div>
+    <div class="stat-card warning"><div class="stat-value">9</div><div class="stat-label">Pending Fees</div></div>
+    <div class="stat-card danger"><div class="stat-value">12</div><div class="stat-label">Staff Members</div></div>
+  </div>
+  <div class="quick-actions">
+    <button class="quick-action"><div class="quick-action-icon analytics"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 7h6v6"/><path d="m22 7-8.5 8.5-5-5L2 17"/></svg></div><span class="quick-action-label">Fee Analytics</span></button>
+    <button class="quick-action"><div class="quick-action-icon fees"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12"/><path d="M6 8h12"/><path d="m6 13 8.5 8"/><path d="M6 13h3"/><path d="M9 13c6.667 0 6.667-10 0-10"/></svg></div><span class="quick-action-label">Manage Fees</span></button>
+    <button class="quick-action"><div class="quick-action-icon create-user"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg></div><span class="quick-action-label">Add Student</span></button>
+    <button class="quick-action"><div class="quick-action-icon students"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg></div><span class="quick-action-label">Manage Users</span></button>
+    <button class="quick-action"><div class="quick-action-icon attendance"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg></div><span class="quick-action-label">Attendance</span></button>
+    <button class="quick-action"><div class="quick-action-icon staff"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 11 2 2 4-4"/><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><span class="quick-action-label">Staff</span></button>
+    <button class="quick-action"><div class="quick-action-icon announcements"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg></div><span class="quick-action-label">Announce</span></button>
+    <button class="quick-action"><div class="quick-action-icon gallery"><svg class="" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/><circle cx="12" cy="13" r="3"/></svg></div><span class="quick-action-label">Gallery</span></button>
+  </div>
+  <div class="card">
+    <div class="card-header"><h3 class="card-title">Recent Announcements</h3></div>
+    <div class="activity-feed">
+      <div class="activity-item"><div class="activity-icon activity">📢</div>
+        <div class="activity-content"><div class="activity-title">Annual Day rehearsal</div>
+        <div class="activity-description">Pick-up moves to 4:30 PM this week</div></div></div>
+      <div class="activity-item"><div class="activity-icon meal">🎉</div>
+        <div class="activity-content"><div class="activity-title">Onam celebration</div>
+        <div class="activity-description">Children may wear traditional dress</div></div></div>
+    </div>
+  </div>
+</div><nav class="bottom-nav"><button class="nav-item active"><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="nav-item-label">Home</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg><span class="nav-item-label">Calendar</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg><span class="nav-item-label">Messages</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg><span class="nav-item-label">Announcements</span></button><button class="nav-item "><svg class="nav-item-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span class="nav-item-label">Profile</span></button></nav></div></div>
+</body></html>

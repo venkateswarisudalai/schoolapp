@@ -393,6 +393,12 @@ export interface StaffAttendanceRecord {
   istDate: string;   // YYYY-MM-DD in IST — grouping key for the daily log
   istTime: string;   // e.g. "09:05 AM" in IST — display label
   method: 'qr' | 'manual';
+  // GPS captured at the moment of the action (geofence audit trail). Optional
+  // so older records and geofence-disabled days still type-check.
+  lat?: number;
+  lng?: number;
+  accuracyMeters?: number;
+  distanceMeters?: number; // distance from campus when recorded
 }
 
 // App feedback — submitted by any user about the app itself.
